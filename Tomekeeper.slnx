@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/api/">
+    <Project Path="api/Tomekeeper.Api.Tests/Tomekeeper.Api.Tests.csproj" />
+    <Project Path="api/Tomekeeper.Api/Tomekeeper.Api.csproj" />
+  </Folder>
+</Solution>

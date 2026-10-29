@@ -7,8 +7,8 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | Step | What | Status |
 | --- | --- | --- |
 | 1.1 | Front-end foundation: Vite + React + TypeScript, design tokens (light, dark, paper plates), self-hosted fonts, site shell (header with Dark theme and Plain script, vine strip, footer with credits), framed panels, woodcut drop caps, tests, CI | Done |
-| 1.2 | Back-end skeleton: ASP.NET Core (.NET 10) API with a health check, PostgreSQL in Docker Compose, Entity Framework Core with the first migration, xUnit tests, CI, the front-end talks to the API through the Vite proxy | Next |
-| 1.3 | Accounts with email: sign up, confirm email, sign in and out, forgot password. Passwords of at least 15 characters checked against a list of breached and common passwords. Cookie sign-in with antiforgery. Front-end: routing, sign-in and sign-up pages with an error summary | |
+| 1.2 | Back-end skeleton: ASP.NET Core (.NET 10) API with health checks (`/api/health/live`, `/api/health/ready` with the database), PostgreSQL 18 in Docker Compose, Entity Framework Core (the first tables and migration come with accounts in 1.3), xUnit v3 tests with Testcontainers, CI, the front-end reaches the API through the Vite proxy | Done |
+| 1.3 | Accounts with email: sign up, confirm email, sign in and out, forgot password. Passwords of at least 15 characters checked against a list of breached and common passwords. Cookie sign-in with antiforgery. The first EF Core migration. Front-end: routing, sign-in and sign-up pages with an error summary | Next |
 | 1.4 | Google sign-in and first steps after sign-up: choose a goal (pages, books or both) and a portrait | |
 | 1.5 | Hardening: rate limiting on sign-in, security headers, account deletion, README update | |
 

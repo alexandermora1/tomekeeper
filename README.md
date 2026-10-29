@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, step 1.1 is done: the front-end foundation with the design, light and dark themes and the Plain script setting. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, steps 1.1 and 1.2 are done: the front-end foundation (design, light and dark themes, Plain script) and the back-end skeleton (API, database, tests). See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -17,46 +17,72 @@ A reading tracker where the yearly goal counts **pages**, not just books. You lo
 | Part | Choice |
 | --- | --- |
 | Front-end | React 19, TypeScript, Vite, CSS modules |
-| Tests (front-end) | Vitest, Testing Library |
-| Back-end (from step 1.2) | ASP.NET Core on .NET 10, Entity Framework Core, ASP.NET Core Identity (email and Google sign-in) |
-| Database (from step 1.2) | PostgreSQL in Docker |
-| Tests (back-end) | xUnit |
-| CI | GitHub Actions |
+| Back-end | ASP.NET Core on .NET 10 (minimal API), Entity Framework Core; ASP.NET Core Identity for email and Google sign-in from step 1.3 |
+| Database | PostgreSQL 18 (Docker Compose locally) |
+| Tests | Vitest and Testing Library for the front-end; xUnit v3 with Testcontainers for the API |
+| CI | GitHub Actions, one workflow for the front-end and one for the API |
 
 ## Run it locally
 
-You need **Node.js 24** (it comes with npm 11; older npm versions can fail on the test packages).
+You need:
+
+- **Node.js 24** (it comes with npm 11; older npm versions can fail on the test packages)
+- **.NET 10 SDK**
+- **Docker Desktop**, running
+
+Then, from the repo root, in three steps:
 
 ```sh
+# 1. The database (PostgreSQL in Docker)
+docker compose up -d
+
+# 2. The API on http://localhost:5080
+dotnet run --project api/Tomekeeper.Api
+
+# 3. The front-end on http://localhost:5173, in a second terminal
 cd web
 npm install
-npm run dev        # http://localhost:5173
+npm run dev
 ```
 
-Other commands, all from `web/`:
+The front-end forwards everything under `/api` to the API, so http://localhost:5173/api/health/ready should answer `{"status":"Healthy",...}` once all three run.
+
+Stop the database with `docker compose down`. Your data stays in a Docker volume; `docker compose down -v` deletes it.
+
+## Tests
 
 ```sh
-npm test           # run the tests once
-npm run test:watch # run the tests on every change
-npm run typecheck  # TypeScript check without building
-npm run build      # production build in web/dist
+# Front-end, from web/
+npm test             # once
+npm run test:watch   # on every change
+npm run typecheck
+
+# API, from the repo root (Docker Desktop must be running)
+dotnet test
 ```
 
-From step 1.2 you will also need the [.NET 10 SDK](https://dotnet.microsoft.com/download) and [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+The API tests start the real API in memory and their own PostgreSQL in Docker with [Testcontainers](https://dotnet.testcontainers.org), so they never touch your development database. To use a PostgreSQL server you already have instead, set `TOMEKEEPER_TEST_POSTGRES` to a connection string for a user that may create databases; the tests then create and drop their own database on it.
 
 ## Project layout
 
 ```
 tomekeeper/
-├── web/                  front-end (React + TypeScript + Vite)
-│   ├── src/components/   shared parts: header, frame, drop cap, footer
-│   ├── src/pages/        one file per page
-│   ├── src/styles/       design tokens (light, dark, paper) and base styles
-│   ├── src/theme/        Dark theme and Plain script preferences
-│   ├── src/woodcuts/     the woodcut initials (J uses I, U uses V)
-│   └── src/assets/       woodcut images
-├── docs/                 roadmap, design tokens, image credits
-└── .github/workflows/    CI
+├── api/
+│   ├── Tomekeeper.Api/         the API: Program.cs, Data/ (EF Core), Health/
+│   └── Tomekeeper.Api.Tests/   xUnit tests
+├── web/                        front-end (React + TypeScript + Vite)
+│   ├── src/components/         shared parts: header, frame, drop cap, footer
+│   ├── src/pages/              one file per page
+│   ├── src/styles/             design tokens (light, dark, paper) and base styles
+│   ├── src/theme/              Dark theme and Plain script preferences
+│   ├── src/woodcuts/           the woodcut initials (J uses I, U uses V)
+│   └── src/assets/             woodcut images
+├── docs/                       roadmap, design tokens, image credits
+├── docker-compose.yml          local PostgreSQL
+├── Tomekeeper.slnx             the .NET solution
+├── Directory.Build.props       shared C# settings (.NET 10, nullable, warnings as errors)
+├── Directory.Packages.props    all NuGet package versions in one place
+└── .github/workflows/          CI
 ```
 
 ## Accessibility

@@ -1,0 +1,23 @@
+# Local development database. Start it with `docker compose up -d`, stop it with `docker compose down`.
+# The data survives restarts in the "tomekeeper-db" volume; `docker compose down -v` deletes it.
+# The password is for this local container only and matches api/Tomekeeper.Api/appsettings.Development.json.
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: tomekeeper
+      POSTGRES_PASSWORD: tomekeeper_dev
+      POSTGRES_DB: tomekeeper
+    ports:
+      - "127.0.0.1:5432:5432" # only reachable from this machine
+    volumes:
+      - tomekeeper-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tomekeeper -d tomekeeper"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tomekeeper-db:
