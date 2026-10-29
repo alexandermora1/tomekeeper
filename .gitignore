@@ -1,0 +1,27 @@
+# Node and Vite
+node_modules/
+dist/
+*.local
+.vite/
+coverage/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+appsettings.Development.local.json
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

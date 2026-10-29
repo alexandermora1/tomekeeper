@@ -1,0 +1,12 @@
+.banner {
+  background: var(--page);
+  border-bottom: 3px solid var(--ink);
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: clamp(220px, 36vw, 520px);
+  object-fit: cover;
+  object-position: 50% 0%;
+}

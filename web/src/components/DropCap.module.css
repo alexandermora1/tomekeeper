@@ -1,0 +1,46 @@
+.paragraph {
+  margin: 0;
+}
+
+.large {
+  font-size: 1.375rem; /* 22px */
+  line-height: 1.55;
+}
+
+.small {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.55;
+}
+
+/* The initial sits on a paper plate in the dark theme (padding and background come from tokens). */
+.cap {
+  float: left;
+  display: block;
+  padding: var(--plate-pad);
+  background: var(--plate-bg);
+}
+
+.large .cap {
+  margin: 4px 18px 4px 0;
+}
+
+.small .cap {
+  margin: 4px 14px 2px 0;
+}
+
+.image {
+  width: 104px;
+  height: 104px;
+}
+
+.small .image {
+  width: 84px;
+  height: 84px;
+}
+
+@media (max-width: 480px) {
+  .large .image {
+    width: 76px;
+    height: 76px;
+  }
+}
