@@ -47,7 +47,7 @@ export function ChroniclePage() {
             )}
             <GoalLine year={year} goal={goal} />
             <p className={styles.note}>
-              Accounts and goals work now. Google sign-in comes next, then the library and your chronicle.
+              Accounts, Google sign-in and goals work now. The library and your chronicle come next.
             </p>
           </div>
         </div>

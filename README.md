@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) accounts with email (sign-up, sign-in, email confirmation and password reset) and the first steps after signing up (a goal for the year and a portrait) are done. Google sign-in comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) accounts (email and password, or Google), email confirmation, password reset and the first steps after signing up (a goal for the year and a portrait) are done. Hardening (rate limits, security headers, deleting an account) comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -17,7 +17,7 @@ A reading tracker where the yearly goal counts **pages**, not just books. You lo
 | Part | Choice |
 | --- | --- |
 | Front-end | React 19, TypeScript, Vite, React Router, CSS modules |
-| Back-end | ASP.NET Core on .NET 10 (minimal API), Entity Framework Core with snake_case tables, ASP.NET Core Identity (email accounts now, Google sign-in in step 1.4) |
+| Back-end | ASP.NET Core on .NET 10 (minimal API), Entity Framework Core with snake_case tables, ASP.NET Core Identity with email and password or Google |
 | Database | PostgreSQL 18 (Docker Compose locally) |
 | Tests | Vitest and Testing Library for the front-end; xUnit v3 with Testcontainers for the API |
 | CI | GitHub Actions, one workflow for the front-end and one for the API |
@@ -49,6 +49,26 @@ Open http://localhost:5173 and create an account. The front-end forwards everyth
 
 Stop the database with `docker compose down`. Your data stays in a Docker volume; `docker compose down -v` deletes it.
 
+### Google sign-in (optional)
+
+Without this, the site works with email and password only, and the Google button doesn't show. To try "Sign in with Google" locally:
+
+1. Open the [Google Cloud console](https://console.cloud.google.com/), sign in and create a project called Tomekeeper.
+2. Open **Google Auth Platform** and press **Get started**. App name: Tomekeeper. Audience: **External**. Add your own email where it asks for one.
+3. Under **Audience**, leave the app in **Testing** and add your own Google account as a test user. Only test users can sign in while it is in testing.
+4. Under **Clients**, create a client of the type **Web application**. Add `http://localhost:5173/api/account/google/callback` under **Authorized redirect URIs**. Copy the client ID and the client secret.
+5. Store them for the API with .NET's secret manager, which keeps them outside the repository (from the repo root):
+
+   ```sh
+   dotnet user-secrets set "Authentication:Google:ClientId" "<client id>" --project api/Tomekeeper.Api
+   dotnet user-secrets set "Authentication:Google:ClientSecret" "<client secret>" --project api/Tomekeeper.Api
+   ```
+
+6. Google's rules say the button must use Google's own "G" logo. Download it from the [Sign in with Google branding guidelines](https://developers.google.com/identity/branding-guidelines) (the PNG "G" logo) and save it as `web/src/assets/brand/google-g.png`.
+7. Restart the API. The sign-in and sign-up pages now show the Google button.
+
+The button is a plain link to the API, which sends the reader to Google's own sign-in page. No Google script runs on Tomekeeper's pages. Google is asked only for the reader's name and email address (the `openid`, `profile` and `email` scopes).
+
 In development the API creates and updates the tables itself when it starts. It doesn't send real emails yet: the confirmation and password-reset emails are written to the API's log in the terminal. The links in them open the pages on http://localhost:5173, so you can copy a link from the terminal into the browser.
 
 ## Accounts and security
@@ -75,12 +95,15 @@ The accounts API is under `/api/account`:
 | `POST confirm-email`, `POST resend-confirmation` | Confirms the address with the code from the email, or sends a new one |
 | `POST forgot-password`, `POST reset-password` | Sends a reset link (the answer is the same whether the account exists or not), then sets a new password |
 | `PUT portrait` | Chooses the reader's portrait: `astrologer`, `knight` or `emperor` |
+| `GET sign-in-options` | Whether Google sign-in is set up, so the front-end knows whether to show the button |
+| `GET google/start`, `GET google/done` | Sends the reader to Google, and signs them in when Google sends them back (through `google/callback`) |
 
 Goals are under `/api/goals/{year}`: `GET` gives the signed-in reader's goal for that year (404 if there is none) and `PUT` sets or changes it, with `kind` (`pages`, `books` or `both`) and the numbers. The year is part of the address because a reader's new year starts at their own midnight; the API accepts last year, this year and next year.
 
 How it is kept safe:
 
 - **Passwords** follow [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html): at least 15 characters, at most 256, any characters allowed, no rules like "one capital letter". A password is refused if it is on a list of about 49,000 common passwords, is a common password with digits or symbols around it, repeats itself, follows the keyboard or the alphabet, or contains the reader's name or email. It is also checked against [Pwned Passwords](https://haveibeenpwned.com/Passwords): only the first 5 characters of its SHA-1 hash leave the server, and if the service can't be reached the check is skipped rather than blocking sign-up. Passwords are stored as hashes by ASP.NET Core Identity.
+- **Google sign-in** links a Google account to a Tomekeeper account by Google's own id, which never changes. If an account already has the same email address, Google is only linked when that address has been confirmed: otherwise someone could sign up with another person's address and wait for the owner to arrive with Google. A Google account without a verified email can't be used. New Google readers have no password; "Forgot your password?" can add one.
 - **Sign-in** uses an HttpOnly cookie (`SameSite=Lax`, and `Secure` outside development). After 5 wrong passwords the account is locked for 15 minutes. A wrong password and an unknown email get the same answer, so the API doesn't reveal who has an account.
 - **Cross-site requests:** every request that changes something must carry the header `X-Tomekeeper-Request`. A form on another site can't add that header, so it can't act on a reader's behalf (the [custom request header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#employing-custom-request-headers-for-ajaxapi) defence).
 - **Errors** come back as [problem details](https://www.rfc-editor.org/rfc/rfc9457) with messages per field (`displayName`, `email`, `password`), written so the front-end can show them as they are.
@@ -154,5 +177,7 @@ The first version is written with Claude (an AI assistant) from my design decisi
 ## Credits
 
 All images are in the public domain. Details are in [docs/image-credits.md](docs/image-credits.md). Fonts: [Grenze Gotisch](https://fonts.google.com/specimen/Grenze+Gotisch), [Alegreya and Alegreya SC](https://www.huertatipografica.com/en/fonts/alegreya-ht-pro), all under the SIL Open Font License and self-hosted.
+
+The "Sign in with Google" button uses [Google Sans](https://fonts.google.com/specimen/Google+Sans) (SIL Open Font License, self-hosted) and Google's "G" logo, as [Google's branding guidelines](https://developers.google.com/identity/branding-guidelines) require.
 
 The common password list comes from [zxcvbn-ts](https://github.com/zxcvbn-ts/zxcvbn) (MIT licence, see `api/Tomekeeper.Api/Passwords/common-passwords.LICENSE.txt`). The breach check uses the free [Pwned Passwords](https://haveibeenpwned.com/Passwords) API by Troy Hunt.

@@ -46,7 +46,10 @@ builder.Services.AddIdentityCore<User>(options =>
     .AddDefaultTokenProviders()
     .AddPasswordValidator<TomekeeperPasswordValidator>();
 
-builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+var authentication = builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme);
+authentication.AddIdentityCookies();
+// "Sign in with Google", only when the Google client id and secret are set (see the README).
+authentication.AddGoogleSignIn(builder.Configuration, builder.Environment);
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "tomekeeper.auth";

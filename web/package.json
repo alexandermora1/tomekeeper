@@ -18,6 +18,7 @@
   "dependencies": {
     "@fontsource/alegreya": "5.3.0",
     "@fontsource/alegreya-sc": "5.3.0",
+    "@fontsource/google-sans": "5.3.2",
     "@fontsource/grenze-gotisch": "5.3.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

@@ -12,6 +12,11 @@ export interface Reader {
   portrait: PortraitId | null;
 }
 
+/** Which ways to sign in the API offers. Google is only there when it has been set up. */
+export interface SignInOptions {
+  google: boolean;
+}
+
 export interface RegisterInput {
   displayName: string;
   email: string;
@@ -37,7 +42,16 @@ export const account = {
   resetPassword: (input: { email: string; code: string; password: string }) =>
     apiRequest('POST', '/api/account/reset-password', input),
   setPortrait: (portrait: PortraitId) => apiRequest<Reader>('PUT', '/api/account/portrait', { portrait }),
+  signInOptions: () => apiRequest<SignInOptions>('GET', '/api/account/sign-in-options'),
 };
+
+/**
+ * The address of the "Sign in with Google" button. It is an ordinary link: the browser leaves the site, the
+ * reader signs in on Google's page, and the API brings them back to `returnTo`.
+ */
+export function googleSignInUrl(returnTo: string): string {
+  return `/api/account/google/start?returnUrl=${encodeURIComponent(returnTo)}`;
+}
 
 /** Asks the API who is signed in. Resolves to null when nobody is. */
 export async function fetchReader(): Promise<Reader | null> {

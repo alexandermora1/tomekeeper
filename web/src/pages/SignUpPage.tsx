@@ -7,6 +7,7 @@ import { ErrorSummary } from '../components/forms/ErrorSummary';
 import { formErrorsFrom, noErrors, type FormErrors } from '../components/forms/formErrors';
 import { PasswordField, TextField } from '../components/forms/TextField';
 import formStyles from '../components/forms/forms.module.css';
+import { GoogleChoice } from '../components/GoogleButton';
 import { Notice } from '../components/Notice';
 import { usePageTitle } from '../routing/usePageTitle';
 import { returnPath } from '../session/guards';
@@ -51,6 +52,7 @@ export function SignUpPage() {
 
   return (
     <AuthLayout intro title="Begin a chronicle" lead="It takes a minute." top={<AuthSwitch current="sign-up" />}>
+      <GoogleChoice mode="sign-up" returnTo={returnPath(location.state)} />
       <form noValidate onSubmit={handleSubmit} className={formStyles.form}>
         <ErrorSummary errors={errors} fields={FIELDS} />
         <TextField

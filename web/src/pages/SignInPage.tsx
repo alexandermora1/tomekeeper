@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { account } from '../api/account';
 import { AuthLayout, AuthSwitch } from '../components/AuthLayout';
 import { Button } from '../components/Button';
@@ -7,10 +7,12 @@ import { ErrorSummary } from '../components/forms/ErrorSummary';
 import { formErrorsFrom, noErrors, type FormErrors } from '../components/forms/formErrors';
 import { PasswordField, TextField } from '../components/forms/TextField';
 import formStyles from '../components/forms/forms.module.css';
+import { GoogleChoice } from '../components/GoogleButton';
 import { Notice } from '../components/Notice';
 import { usePageTitle } from '../routing/usePageTitle';
 import { returnPath } from '../session/guards';
 import { useSession } from '../session/sessionContext';
+import { GOOGLE_PROBLEMS } from './accountText';
 
 const FIELDS = [
   { name: 'email', id: 'email' },
@@ -23,7 +25,9 @@ export function SignInPage() {
   const { setReader } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
-  const [errors, setErrors] = useState<FormErrors<Field>>(noErrors);
+  const [searchParams] = useSearchParams();
+  // When Google sign-in didn't work, the API sends the reader here with ?google=… saying why.
+  const [errors, setErrors] = useState<FormErrors<Field>>(() => googleErrors(searchParams.get('google')));
   const [pending, setPending] = useState(false);
   const signedOut = hasFlag(location.state, 'signedOut');
 
@@ -55,6 +59,7 @@ export function SignInPage() {
       lead="Sign in with the email you signed up with."
       top={<AuthSwitch current="sign-in" />}
     >
+      <GoogleChoice mode="sign-in" returnTo={returnPath(location.state)} />
       <form noValidate onSubmit={handleSubmit} className={formStyles.form}>
         {signedOut && <Notice role="status">You're signed out.</Notice>}
         <ErrorSummary errors={errors} fields={FIELDS} />
@@ -87,6 +92,12 @@ export function SignInPage() {
       </form>
     </AuthLayout>
   );
+}
+
+function googleErrors(problem: string | null): FormErrors<Field> {
+  const errors = noErrors<Field>();
+  if (problem) errors.general.push(GOOGLE_PROBLEMS[problem] ?? GOOGLE_PROBLEMS.failed!);
+  return errors;
 }
 
 function hasFlag(state: unknown, flag: string): boolean {

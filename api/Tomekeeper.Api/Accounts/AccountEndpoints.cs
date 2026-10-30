@@ -42,6 +42,7 @@ public static class AccountEndpoints
         account.MapPost("/forgot-password", ForgotPassword);
         account.MapPost("/reset-password", ResetPassword);
         account.MapPut("/portrait", SetPortrait).RequireAuthorization();
+        account.MapGoogleSignIn();
 
         return account;
     }
