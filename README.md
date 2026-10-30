@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) and the accounts API (sign-up, sign-in, email confirmation, password reset) are done. The sign-in pages come next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) and accounts with email (sign-up, sign-in, email confirmation and password reset, in the API and as pages) are done. Google sign-in and choosing a goal and portrait come next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -16,7 +16,7 @@ A reading tracker where the yearly goal counts **pages**, not just books. You lo
 
 | Part | Choice |
 | --- | --- |
-| Front-end | React 19, TypeScript, Vite, CSS modules |
+| Front-end | React 19, TypeScript, Vite, React Router, CSS modules |
 | Back-end | ASP.NET Core on .NET 10 (minimal API), Entity Framework Core with snake_case tables, ASP.NET Core Identity (email accounts now, Google sign-in in step 1.4) |
 | Database | PostgreSQL 18 (Docker Compose locally) |
 | Tests | Vitest and Testing Library for the front-end; xUnit v3 with Testcontainers for the API |
@@ -45,13 +45,24 @@ npm install
 npm run dev
 ```
 
-The front-end forwards everything under `/api` to the API, so http://localhost:5173/api/health/ready should answer `{"status":"Healthy",...}` once all three run.
+Open http://localhost:5173 and create an account. The front-end forwards everything under `/api` to the API, so the two act as one site and the sign-in cookie just works. http://localhost:5173/api/health/ready should answer `{"status":"Healthy",...}` once all three run. If the API isn't running, the forms say "Something went wrong on our side".
 
 Stop the database with `docker compose down`. Your data stays in a Docker volume; `docker compose down -v` deletes it.
 
-In development the API creates and updates the tables itself when it starts. It doesn't send real emails yet: the confirmation and password-reset emails are written to the API's log in the terminal, so you can copy the link from there.
+In development the API creates and updates the tables itself when it starts. It doesn't send real emails yet: the confirmation and password-reset emails are written to the API's log in the terminal. The links in them open the pages on http://localhost:5173, so you can copy a link from the terminal into the browser.
 
 ## Accounts and security
+
+The pages:
+
+| Page | What it is |
+| --- | --- |
+| `/sign-in`, `/sign-up` | Sign in, or create an account. Visitors who aren't signed in are sent here, and back to where they were afterwards |
+| `/confirm-email` | Opened from the confirmation email. The reader presses a button to confirm, so email services that open links to scan them don't confirm by accident |
+| `/forgot-password`, `/reset-password` | Ask for a reset link, then choose a new password from the link in the email |
+| `/` | The chronicle, for signed-in readers. It reminds readers to confirm their email until they have |
+
+The forms follow the [GOV.UK error pattern](https://design-system.service.gov.uk/components/error-summary/): after a failed submit, a summary at the top lists every problem and takes the focus, each problem links to its field, and the message also sits next to the field. The messages come from the API, so the rules live in one place. Fields have `autocomplete` values that password managers understand, and the password can be shown while typing. After moving to another page, focus goes to the main content, so screen readers announce the new page.
 
 The accounts API is under `/api/account`:
 
@@ -83,7 +94,7 @@ curl -b cookies.txt http://localhost:5080/api/account/me
 ## Tests
 
 ```sh
-# Front-end, from web/
+# Front-end, from web/ (no API needed: the tests use a fake one in src/test/fakeApi.ts)
 npm test             # once
 npm run test:watch   # on every change
 npm run typecheck
@@ -107,8 +118,13 @@ tomekeeper/
 │   │   └── Health/             health checks
 │   └── Tomekeeper.Api.Tests/   xUnit tests
 ├── web/                        front-end (React + TypeScript + Vite)
-│   ├── src/components/         shared parts: header, frame, drop cap, footer
-│   ├── src/pages/              one file per page
+│   ├── src/api/                calls to the API, with the request header and error handling
+│   ├── src/session/            who is signed in, and the guards that send visitors to sign in
+│   ├── src/routing/            focus and page titles when moving between pages
+│   ├── src/components/         shared parts: header, frame, drop cap, footer, buttons
+│   ├── src/components/forms/   text and password fields, error summary
+│   ├── src/pages/              one file per page, with its tests beside it
+│   ├── src/test/               test setup, a fake API for the tests
 │   ├── src/styles/             design tokens (light, dark, paper) and base styles
 │   ├── src/theme/              Dark theme and Plain script preferences
 │   ├── src/woodcuts/           the woodcut initials (J uses I, U uses V)

@@ -9,8 +9,8 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | 1.1 | Front-end foundation: Vite + React + TypeScript, design tokens (light, dark, paper plates), self-hosted fonts, site shell (header with Dark theme and Plain script, vine strip, footer with credits), framed panels, woodcut drop caps, tests, CI | Done |
 | 1.2 | Back-end skeleton: ASP.NET Core (.NET 10) API with health checks (`/api/health/live`, `/api/health/ready` with the database), PostgreSQL 18 in Docker Compose, Entity Framework Core (the first tables and migration come with accounts in 1.3), xUnit v3 tests with Testcontainers, CI, the front-end reaches the API through the Vite proxy | Done |
 | 1.3a | Accounts API: sign up, confirm email, sign in and out, forgot and reset password, lockout after 5 tries. Passwords of 15 to 256 characters, checked against common passwords, patterns, the reader's name and email, and Pwned Passwords. Cookie sign-in, a custom request header against cross-site requests, errors per field. The first EF Core migration, with snake_case tables. Emails go to the log in development | Done |
-| 1.3b | Front-end accounts: routing, sign-in and sign-up pages with an error summary, confirm-email and reset-password pages, the header shows who is signed in | Next |
-| 1.4 | Google sign-in and first steps after sign-up: choose a goal (pages, books or both) and a portrait | |
+| 1.3b | Front-end accounts: React Router, sign-in and sign-up pages from the 2c design with an error summary, confirm-email, forgot and reset password pages, the header shows the menu and Sign out when signed in, focus moves to the new page after a link, tests with a fake API | Done |
+| 1.4 | Google sign-in and first steps after sign-up: choose a goal (pages, books or both) and a portrait | Next |
 | 1.5 | Hardening: rate limiting on sign-in, security headers, account deletion, README update | |
 
 ## Later stages

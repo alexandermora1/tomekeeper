@@ -1,0 +1,38 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  text-align: center;
+  text-decoration: none;
+}
+
+.primary {
+  min-height: 50px;
+  padding: 8px 24px;
+  background: var(--ink);
+  color: var(--page);
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+  font-weight: 700;
+}
+
+.primary:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--page);
+}
+
+.secondary {
+  min-height: 44px;
+  padding: 4px 14px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem; /* 16px */
+}
+
+.secondary:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}

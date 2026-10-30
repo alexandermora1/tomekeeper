@@ -30,6 +30,15 @@
   max-width: 820px;
 }
 
+.notice {
+  margin-top: 28px;
+  max-width: 820px;
+}
+
 .note {
   margin: 0;
+}
+
+.note + .note {
+  margin-top: 10px;
 }

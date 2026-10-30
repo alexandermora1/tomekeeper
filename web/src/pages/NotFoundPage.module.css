@@ -1,0 +1,12 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  font-size: 1.25rem; /* 20px */
+}
+
+.title {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: clamp(2.375rem, 5vw, 3.625rem); /* 38–58px */
+  font-weight: 700;
+}

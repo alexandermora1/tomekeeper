@@ -88,6 +88,27 @@
   color: var(--chrome);
 }
 
+/* Sign out, or Sign in for visitors */
+.action {
+  min-height: 44px;
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid var(--chrome-ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--chrome-ink);
+  font-size: 1.0625rem; /* 17px */
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.action:hover {
+  color: var(--chrome-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .box {
   display: inline-flex;
   align-items: center;

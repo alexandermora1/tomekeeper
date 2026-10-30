@@ -1,0 +1,50 @@
+.notice {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 2px solid var(--ink);
+  background: var(--raised);
+  font-size: 1rem; /* 16px */
+}
+
+.hand {
+  flex: none;
+  color: var(--accent);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.body p {
+  margin: 0;
+}
+
+.body > * + * {
+  margin-top: 8px;
+}
+
+/* An empty status line (see ConfirmEmailNotice) takes no space until it has a message */
+.body > p:empty {
+  margin: 0;
+}
+
+.outcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  font-size: 1.25rem; /* 20px */
+}
+
+.outcome p {
+  margin: 0;
+}
+
+/* It only gets focus from the page itself, to move screen readers here; it isn't something to press. */
+.outcome:focus {
+  outline: none;
+}

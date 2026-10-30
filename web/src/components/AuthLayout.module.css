@@ -1,0 +1,120 @@
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  align-items: flex-start;
+}
+
+.columns > * {
+  flex: 1 1 440px;
+  min-width: 0;
+}
+
+.single {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.panel {
+  padding-bottom: 28px;
+}
+
+.lead {
+  margin: -8px 0 18px;
+  font-size: 1.0625rem; /* 17px */
+  color: var(--muted);
+}
+
+/* What Tomekeeper is, beside the sign-in and sign-up forms */
+
+.plate {
+  padding: 5px;
+  border: 3px solid var(--ink);
+  background: var(--page);
+}
+
+.image {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  object-position: 50% 0%;
+  border: 1.5px solid var(--ink);
+}
+
+.heading {
+  margin: 24px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.375rem, 5vw, 3.625rem); /* 38–58px */
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.points {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 1.25rem; /* 20px */
+}
+
+.points li {
+  display: flex;
+  gap: 12px;
+}
+
+.points li::before {
+  content: '❧';
+  content: '❧' / ''; /* decoration: screen readers skip it */
+  color: var(--accent);
+}
+
+/* On narrow screens the form comes first and the introduction moves below it */
+@media (max-width: 900px) {
+  .intro {
+    order: 2;
+  }
+
+  .image {
+    height: 180px;
+  }
+}
+
+/* Sign in | Create an account */
+
+.switch {
+  display: flex;
+  margin-bottom: 22px;
+  border: 2px solid var(--ink);
+}
+
+.switch a {
+  flex: 1 1 50%;
+  min-height: 48px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: var(--font-caps);
+  font-size: 1.1875rem; /* 19px */
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.switch a + a {
+  border-left: 2px solid var(--ink);
+}
+
+.switch a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.switch a[aria-current='page'] {
+  background: var(--ink);
+  color: var(--page);
+  text-decoration: none;
+}

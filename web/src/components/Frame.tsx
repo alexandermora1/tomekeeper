@@ -3,8 +3,10 @@ import styles from './Frame.module.css';
 
 interface FrameProps {
   title: string;
-  /** Heading level inside the frame. Pages use 2; frames nested in a section use 3. */
-  level?: 2 | 3;
+  /** Heading level inside the frame. Usually 2; 1 when the frame is the whole page; 3 inside a section. */
+  level?: 1 | 2 | 3;
+  /** Content above the heading, such as the switch between signing in and creating an account. */
+  top?: ReactNode;
   /** Extra content beside the heading, such as filter buttons. */
   aside?: ReactNode;
   className?: string;
@@ -12,14 +14,15 @@ interface FrameProps {
 }
 
 /** A panel with a double ink border, corner ornaments and a heading with a leaf. */
-export function Frame({ title, level = 2, aside, className, children }: FrameProps) {
+export function Frame({ title, level = 2, top, aside, className, children }: FrameProps) {
   const headingId = useId();
-  const Heading = level === 2 ? 'h2' : 'h3';
+  const Heading = level === 1 ? 'h1' : level === 2 ? 'h2' : 'h3';
   return (
     <section aria-labelledby={headingId} className={[styles.frame, className].filter(Boolean).join(' ')}>
       {(['tl', 'tr', 'bl', 'br'] as const).map((corner) => (
         <Corner key={corner} position={corner} />
       ))}
+      {top}
       <div className={styles.head}>
         <Heading id={headingId} className={styles.title}>
           <Leaf />
