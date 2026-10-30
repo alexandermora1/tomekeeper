@@ -18,7 +18,11 @@ namespace Tomekeeper.Api.Tests;
 /// instead of being sent, the breach check uses <see cref="Breaches"/> instead of the outside service,
 /// and Google sign-in talks to <see cref="Google"/> instead of Google.
 /// </summary>
-public sealed class TomekeeperApiFactory(string connectionString, string environment = "Development", bool withGoogle = true)
+public sealed class TomekeeperApiFactory(
+    string connectionString,
+    string environment = "Development",
+    bool withGoogle = true,
+    IReadOnlyDictionary<string, string>? settings = null)
     : WebApplicationFactory<Program>
 {
     public const string PublicUrl = "http://tomekeeper.test";
@@ -34,6 +38,10 @@ public sealed class TomekeeperApiFactory(string connectionString, string environ
         builder.UseEnvironment(environment);
         builder.UseSetting("ConnectionStrings:Tomekeeper", connectionString);
         builder.UseSetting("App:PublicUrl", PublicUrl);
+        foreach (var (key, value) in settings ?? new Dictionary<string, string>())
+        {
+            builder.UseSetting(key, value);
+        }
         if (withGoogle)
         {
             builder.UseSetting(GoogleSignIn.ClientIdKey, "test-client-id");

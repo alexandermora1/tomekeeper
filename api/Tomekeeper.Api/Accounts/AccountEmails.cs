@@ -32,6 +32,18 @@ public static class AccountEmails
 
         The link works for 24 hours. If you didn't ask for this, you can ignore this email and your password stays the same.
         """);
+
+    /// <summary>Sent after the account is gone, so the reader has a record, and notices if it wasn't them.</summary>
+    public static AccountEmail Deleted(User user, DateTimeOffset when) => new(
+        user.Email!,
+        "Your Tomekeeper account is deleted",
+        $"""
+        Hello {user.DisplayName},
+
+        Your Tomekeeper account for {user.Email} was deleted on {when:d MMMM yyyy}, together with everything in it.
+
+        You are welcome to create a new account at any time.
+        """);
 }
 
 /// <summary>

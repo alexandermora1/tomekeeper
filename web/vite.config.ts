@@ -1,9 +1,45 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
+/**
+ * The Content Security Policy for the built site: the browser only runs scripts, styles, fonts and images
+ * from Tomekeeper itself, so injected code (cross-site scripting) has nothing to load or send to.
+ * Images and fonts may also be data: URLs, which Vite uses for very small files.
+ * frame-ancestors can't be set in a <meta> tag; the server sends it as a header when the site is deployed.
+ */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join('; ');
+
+/**
+ * Adds the policy to index.html in production builds only. The development server needs inline scripts
+ * and styles for hot reloading, so it runs without it.
+ */
+function contentSecurityPolicy(): Plugin {
+  return {
+    name: 'tomekeeper-content-security-policy',
+    apply: 'build',
+    transformIndexHtml: () => [
+      {
+        tag: 'meta',
+        attrs: { 'http-equiv': 'Content-Security-Policy', content: CONTENT_SECURITY_POLICY },
+        injectTo: 'head-prepend',
+      },
+    ],
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), contentSecurityPolicy()],
   server: {
     port: 5173,
     // In development the front-end and the API look like one site: /api goes to `dotnet run` on port 5080.

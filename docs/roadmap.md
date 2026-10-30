@@ -2,7 +2,7 @@
 
 Tomekeeper is built in six stages. Each stage is split into steps small enough to finish, test and review in one sitting.
 
-## Stage 1: Foundation
+## Stage 1: Foundation (done)
 
 | Step | What | Status |
 | --- | --- | --- |
@@ -12,11 +12,11 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | 1.3b | Front-end accounts: React Router, sign-in and sign-up pages from the 2c design with an error summary, confirm-email, forgot and reset password pages, the header shows the menu and Sign out when signed in, focus moves to the new page after a link, tests with a fake API | Done |
 | 1.4a | First steps after sign-up: what the goal counts (pages, books or both), how much (a suggestion of about 20 pages a day to 31 December), and a portrait. `reading_goals` table with one goal per reader and year, `PUT /api/account/portrait`, `GET`/`PUT /api/goals/{year}`. New readers are sent to the first steps until they are done; the chronicle shows the portrait and goal | Done |
 | 1.4b | Google sign-in, server side with ASP.NET Core's Google handler (no Google script in the page): "Sign in with Google" and "Sign up with Google" following Google's branding rules, accounts linked by Google's id, linking to an existing account only when its email is confirmed, only the openid, email and profile scopes, no Google photo. The button only shows when the API has a Google client set up | Done |
-| 1.5 | Hardening: rate limiting on sign-in, security headers, account deletion, README update | Next |
+| 1.5 | Hardening: rate limits per IP address on the account endpoints (429 with Retry-After) and at most 3 emails of one kind per address an hour; security headers on API answers; a Content Security Policy in the production build (the theme script moved to a file); a settings page where readers delete their account, confirmed with their email address and password | Done |
 
 ## Later stages
 
-2. **Library:** search Open Library, keep books in our own catalogue, shelves (Reading now, Want to read, Finished, Set aside), add a book by hand.
+2. **Library (next):** search Open Library, keep books in our own catalogue, shelves (Reading now, Want to read, Finished, Set aside), add a book by hand.
 3. **Progress and goals:** log by page or percent, the yearly goal, the Chronicle dashboard and the Twelve Labours (wheel on wide screens, month boxes on phones).
 4. **The game:** XP and levels, quests, attributes, gear, volumes.
 5. **Fellowship:** profiles with "see your profile as", friends, reviews, block and report. Private by default.

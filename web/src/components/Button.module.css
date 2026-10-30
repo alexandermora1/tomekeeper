@@ -36,3 +36,20 @@
   color: var(--accent);
   border-color: var(--accent);
 }
+
+.danger {
+  min-height: 50px;
+  padding: 8px 24px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--page);
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+  font-weight: 700;
+}
+
+.danger:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--page);
+}

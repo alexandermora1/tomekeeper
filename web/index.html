@@ -9,24 +9,9 @@
     <title>Tomekeeper</title>
     <!--
       Sets the theme and script before the first paint, so a dark-theme reader never sees a flash of the light page.
-      The same rules live in src/theme/preferences.ts; keep them in step.
+      It is a separate file, not inline, so the Content Security Policy can forbid inline scripts.
     -->
-    <script>
-      (function () {
-        var root = document.documentElement;
-        var theme = null;
-        var script = null;
-        try {
-          theme = localStorage.getItem('tomekeeper.theme');
-          script = localStorage.getItem('tomekeeper.script');
-        } catch (e) {}
-        if (theme !== 'light' && theme !== 'dark') {
-          theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        root.setAttribute('data-theme', theme);
-        root.setAttribute('data-script', script === 'plain' ? 'plain' : 'decorative');
-      })();
-    </script>
+    <script src="/theme.js"></script>
   </head>
   <body>
     <div id="root"></div>

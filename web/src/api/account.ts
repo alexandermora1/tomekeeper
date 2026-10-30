@@ -10,6 +10,8 @@ export interface Reader {
   emailConfirmed: boolean;
   /** Null until the reader has taken the first steps after signing up. */
   portrait: PortraitId | null;
+  /** False for readers who only sign in with Google. */
+  hasPassword: boolean;
 }
 
 /** Which ways to sign in the API offers. Google is only there when it has been set up. */
@@ -43,6 +45,8 @@ export const account = {
     apiRequest('POST', '/api/account/reset-password', input),
   setPortrait: (portrait: PortraitId) => apiRequest<Reader>('PUT', '/api/account/portrait', { portrait }),
   signInOptions: () => apiRequest<SignInOptions>('GET', '/api/account/sign-in-options'),
+  /** Deletes the account and everything in it. The password is needed when the account has one. */
+  deleteAccount: (input: { email: string; password: string | null }) => apiRequest('POST', '/api/account/delete', input),
 };
 
 /**

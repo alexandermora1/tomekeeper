@@ -30,6 +30,7 @@ export function SignInPage() {
   const [errors, setErrors] = useState<FormErrors<Field>>(() => googleErrors(searchParams.get('google')));
   const [pending, setPending] = useState(false);
   const signedOut = hasFlag(location.state, 'signedOut');
+  const deleted = hasFlag(location.state, 'accountDeleted');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,6 +63,7 @@ export function SignInPage() {
       <GoogleChoice mode="sign-in" returnTo={returnPath(location.state)} />
       <form noValidate onSubmit={handleSubmit} className={formStyles.form}>
         {signedOut && <Notice role="status">You're signed out.</Notice>}
+        {deleted && <Notice role="status">Your account is deleted, together with everything in it.</Notice>}
         <ErrorSummary errors={errors} fields={FIELDS} />
         <TextField
           id="email"

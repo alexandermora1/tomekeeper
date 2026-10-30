@@ -6,6 +6,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignInPage } from './pages/SignInPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { FocusOnNavigate } from './routing/FocusOnNavigate';
 import { RequireReader, RequireSignedOut } from './session/guards';
@@ -37,6 +38,14 @@ export function App() {
             element={
               <RequireReader beforeFirstSteps>
                 <FirstStepsPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireReader>
+                <SettingsPage />
               </RequireReader>
             }
           />

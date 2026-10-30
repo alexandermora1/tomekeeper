@@ -214,6 +214,24 @@ public sealed class GoogleSignInTests(PostgresFixture database) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_google_reader_deletes_their_account_with_their_email_address_alone()
+    {
+        var google = NewGoogleUser();
+        await SignInWithGoogle(google);
+        Assert.False((await Me())!.HasPassword);
+
+        var response = await _browser.PostAsJsonAsync("/api/account/delete", new { email = google.Email }, Cancel);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Null(await Me());
+
+        // Signing in with Google again makes a new, empty account.
+        using var again = _api.CreateBrowserClient(followRedirects: false);
+        await SignInWithGoogle(google, browser: again);
+        Assert.Null((await Me(again))!.Portrait);
+    }
+
+    [Fact]
     public async Task A_google_reader_has_no_password_until_they_choose_one()
     {
         var google = NewGoogleUser();

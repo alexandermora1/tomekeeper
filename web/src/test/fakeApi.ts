@@ -29,6 +29,7 @@ export const sampleReader: Reader = {
   email: 'ingrid@example.no',
   emailConfirmed: true,
   portrait: 'knight',
+  hasPassword: true,
 };
 
 export function problem(status: number, detail: string, title = "That didn't work"): FakeResponse {

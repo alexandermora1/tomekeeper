@@ -2,10 +2,10 @@ import type { ButtonHTMLAttributes } from 'react';
 import { Link, type LinkProps } from 'react-router';
 import styles from './Button.module.css';
 
-type Variant = 'primary' | 'secondary';
+type Variant = 'primary' | 'secondary' | 'danger';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Primary: the main action of a form, ink filled. Secondary: smaller, outlined. */
+  /** Primary: the main action of a form, ink filled. Secondary: smaller, outlined. Danger: red, for actions that can't be undone. */
   variant?: Variant;
 }
 

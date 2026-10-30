@@ -1,7 +1,7 @@
 /*
   Design tokens for the 2c "Woodcut chronicle" design.
 
-  The theme is set on <html data-theme="light|dark"> before the first paint (see index.html),
+  The theme is set on <html data-theme="light|dark"> before the first paint (see public/theme.js),
   and the reader can override the device setting with the "Dark theme" button.
   Anything with class="paper" (woodcuts, book covers, friend seals, earned gear) switches
   back to ink on paper in the dark theme, on a dimmed paper plate.

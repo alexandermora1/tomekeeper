@@ -2,7 +2,7 @@
  * Reader preferences that change how every page looks: light or dark theme, and the
  * decorative blackletter or "Plain script". They are stored per device in localStorage.
  *
- * index.html applies the same rules before the first paint. Keep the two in step.
+ * public/theme.js applies the same rules before the first paint. Keep the two in step.
  */
 
 export type Theme = 'light' | 'dark';

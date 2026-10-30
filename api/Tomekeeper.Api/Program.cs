@@ -94,6 +94,9 @@ builder.Services.AddHttpClient<IBreachedPasswordCheck, PwnedPasswordsClient>(cli
 // The clock, as a service so tests could set the time.
 builder.Services.AddSingleton(TimeProvider.System);
 
+// Limits on how often the account endpoints can be called (Security/RateLimits.cs).
+builder.Services.AddTomekeeperRateLimits(builder.Configuration);
+
 builder.Services.AddHealthChecks().AddDbContextCheck<TomekeeperDbContext>(HealthEndpoints.DatabaseCheck);
 builder.Services.AddProblemDetails();
 
@@ -106,9 +109,11 @@ if (app.Environment.IsDevelopment())
     await scope.ServiceProvider.GetRequiredService<TomekeeperDbContext>().Database.MigrateAsync();
 }
 
+app.UseSecurityHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseRequestHeaderGuard();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

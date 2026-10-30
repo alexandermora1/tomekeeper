@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Tomekeeper.Api.Security;
 
 namespace Tomekeeper.Api.Accounts;
 
@@ -10,12 +11,16 @@ public sealed record ConfirmEmailRequest(Guid UserId, string? Code);
 public sealed record ForgotPasswordRequest(string? Email);
 public sealed record ResetPasswordRequest(string? Email, string? Code, string? Password);
 public sealed record PortraitRequest(string? Portrait);
+/// <param name="Email">The reader types their email address to show they mean it.</param>
+/// <param name="Password">Needed when the account has a password; Google-only accounts have none.</param>
+public sealed record DeleteAccountRequest(string? Email, string? Password);
 
 /// <param name="Portrait">"astrologer", "knight" or "emperor"; null until the reader has taken the first steps.</param>
-public sealed record MeResponse(Guid Id, string DisplayName, string Email, bool EmailConfirmed, string? Portrait)
+/// <param name="HasPassword">False for readers who only sign in with Google.</param>
+public sealed record MeResponse(Guid Id, string DisplayName, string Email, bool EmailConfirmed, string? Portrait, bool HasPassword)
 {
     public static MeResponse From(User user) =>
-        new(user.Id, user.DisplayName, user.Email ?? "", user.EmailConfirmed, user.Portrait?.ToApiName());
+        new(user.Id, user.DisplayName, user.Email ?? "", user.EmailConfirmed, user.Portrait?.ToApiName(), user.PasswordHash is not null);
 }
 
 /// <summary>
@@ -33,15 +38,16 @@ public static class AccountEndpoints
     {
         var account = app.MapGroup("/api/account").WithTags("Account");
 
-        account.MapPost("/register", Register);
-        account.MapPost("/sign-in", SignIn);
+        account.MapPost("/register", Register).RequireRateLimiting(RateLimits.AccountPolicy);
+        account.MapPost("/sign-in", SignIn).RequireRateLimiting(RateLimits.AccountPolicy);
         account.MapPost("/sign-out", SignOut);
         account.MapGet("/me", Me).RequireAuthorization();
-        account.MapPost("/confirm-email", ConfirmEmail);
-        account.MapPost("/resend-confirmation", ResendConfirmation).RequireAuthorization();
-        account.MapPost("/forgot-password", ForgotPassword);
-        account.MapPost("/reset-password", ResetPassword);
+        account.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting(RateLimits.AccountPolicy);
+        account.MapPost("/resend-confirmation", ResendConfirmation).RequireAuthorization().RequireRateLimiting(RateLimits.EmailPolicy);
+        account.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting(RateLimits.EmailPolicy);
+        account.MapPost("/reset-password", ResetPassword).RequireRateLimiting(RateLimits.AccountPolicy);
         account.MapPut("/portrait", SetPortrait).RequireAuthorization();
+        account.MapPost("/delete", DeleteAccount).RequireAuthorization().RequireRateLimiting(RateLimits.AccountPolicy);
         account.MapGoogleSignIn();
 
         return account;
@@ -150,27 +156,35 @@ public static class AccountEndpoints
         UserManager<User> users,
         IAccountEmailSender email,
         AccountLinks links,
+        EmailLimiter limiter,
         CancellationToken cancellationToken)
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return TypedResults.Unauthorized();
-        if (!user.EmailConfirmed) await SendConfirmationAsync(user, users, email, links, cancellationToken);
+        if (!user.EmailConfirmed && limiter.MaySend("confirm", user.Email!))
+        {
+            await SendConfirmationAsync(user, users, email, links, cancellationToken);
+        }
         return TypedResults.NoContent();
     }
 
-    /// <summary>Always answers 204, whether or not the email has an account.</summary>
+    /// <summary>
+    /// Always answers 204, whether or not the email has an account, and whether or not the email was sent.
+    /// At most a few reset emails go to one address an hour, so the form can't be used to flood an inbox.
+    /// </summary>
     private static async Task<Results<NoContent, ValidationProblem>> ForgotPassword(
         ForgotPasswordRequest request,
         UserManager<User> users,
         IAccountEmailSender email,
         AccountLinks links,
+        EmailLimiter limiter,
         CancellationToken cancellationToken)
     {
         var address = request.Email?.Trim() ?? "";
         if (address.Length == 0) return new FieldErrors().Add("email", "Enter your email address.").ToProblem();
 
         var user = await users.FindByEmailAsync(address);
-        if (user is not null)
+        if (user is not null && limiter.MaySend("reset", address))
         {
             var token = await users.GeneratePasswordResetTokenAsync(user);
             await email.SendAsync(AccountEmails.PasswordReset(user, links.PasswordReset(user.Email!, token)), cancellationToken);
@@ -220,6 +234,50 @@ public static class AccountEndpoints
         user.Portrait = portrait;
         await users.UpdateAsync(user);
         return TypedResults.Ok(MeResponse.From(user));
+    }
+
+    /// <summary>
+    /// Deletes the account and everything in it, then signs out. The reader types their email address, and
+    /// their password if they have one, so a moment at someone else's unlocked computer isn't enough.
+    /// </summary>
+    private static async Task<Results<NoContent, ValidationProblem, UnauthorizedHttpResult>> DeleteAccount(
+        DeleteAccountRequest request,
+        ClaimsPrincipal principal,
+        UserManager<User> users,
+        SignInManager<User> signIn,
+        IAccountEmailSender email,
+        TimeProvider time,
+        CancellationToken cancellationToken)
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return TypedResults.Unauthorized();
+
+        var errors = new FieldErrors();
+        var typed = request.Email?.Trim() ?? "";
+        if (typed.Length == 0) errors.Add("email", "Type your email address to confirm.");
+        else if (!string.Equals(typed, user.Email, StringComparison.OrdinalIgnoreCase)) errors.Add("email", "That isn't the email address of this account.");
+
+        if (user.PasswordHash is not null)
+        {
+            if (string.IsNullOrEmpty(request.Password)) errors.Add("password", "Enter your password.");
+            else if (!errors.Any)
+            {
+                // Wrong passwords here count towards the lockout, like on the sign-in page.
+                var check = await signIn.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+                if (check.IsLockedOut) errors.Add("password", LockedOutMessage);
+                else if (!check.Succeeded) errors.Add("password", "That password isn't right.");
+            }
+        }
+        if (errors.Any) return errors.ToProblem();
+
+        var goodbye = AccountEmails.Deleted(user, time.GetUtcNow());
+        // Goals, Google links and everything else that belongs to the reader go with the account (cascade delete).
+        var deleted = await users.DeleteAsync(user);
+        if (!deleted.Succeeded) return errors.AddIdentityErrors(deleted.Errors, "").ToProblem();
+
+        await signIn.SignOutAsync();
+        await email.SendAsync(goodbye, cancellationToken);
+        return TypedResults.NoContent();
     }
 
     private static async Task SendConfirmationAsync(

@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) accounts (email and password, or Google), email confirmation, password reset and the first steps after signing up (a goal for the year and a portrait) are done. Hardening (rate limits, security headers, deleting an account) comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -82,6 +82,7 @@ The pages:
 | `/forgot-password`, `/reset-password` | Ask for a reset link, then choose a new password from the link in the email |
 | `/first-steps` | Right after signing up: what the goal counts (pages, books or both), how much, and a portrait. New readers are sent here until they have done it |
 | `/` | The chronicle, for signed-in readers. It shows the reader's portrait and goal, and reminds readers to confirm their email until they have |
+| `/settings` | The account: name, email, whether it has a password, and deleting the account |
 
 The forms follow the [GOV.UK error pattern](https://design-system.service.gov.uk/components/error-summary/): after a failed submit, a summary at the top lists every problem and takes the focus, each problem links to its field, and the message also sits next to the field. The messages come from the API, so the rules live in one place. Fields have `autocomplete` values that password managers understand, and the password can be shown while typing. After moving to another page, focus goes to the main content, so screen readers announce the new page.
 
@@ -97,6 +98,7 @@ The accounts API is under `/api/account`:
 | `PUT portrait` | Chooses the reader's portrait: `astrologer`, `knight` or `emperor` |
 | `GET sign-in-options` | Whether Google sign-in is set up, so the front-end knows whether to show the button |
 | `GET google/start`, `GET google/done` | Sends the reader to Google, and signs them in when Google sends them back (through `google/callback`) |
+| `POST delete` | Deletes the account and everything in it, after the reader types their email address (and password, if they have one), then sends a last email |
 
 Goals are under `/api/goals/{year}`: `GET` gives the signed-in reader's goal for that year (404 if there is none) and `PUT` sets or changes it, with `kind` (`pages`, `books` or `both`) and the numbers. The year is part of the address because a reader's new year starts at their own midnight; the API accepts last year, this year and next year.
 
@@ -105,6 +107,10 @@ How it is kept safe:
 - **Passwords** follow [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html): at least 15 characters, at most 256, any characters allowed, no rules like "one capital letter". A password is refused if it is on a list of about 49,000 common passwords, is a common password with digits or symbols around it, repeats itself, follows the keyboard or the alphabet, or contains the reader's name or email. It is also checked against [Pwned Passwords](https://haveibeenpwned.com/Passwords): only the first 5 characters of its SHA-1 hash leave the server, and if the service can't be reached the check is skipped rather than blocking sign-up. Passwords are stored as hashes by ASP.NET Core Identity.
 - **Google sign-in** links a Google account to a Tomekeeper account by Google's own id, which never changes. If an account already has the same email address, Google is only linked when that address has been confirmed: otherwise someone could sign up with another person's address and wait for the owner to arrive with Google. A Google account without a verified email can't be used. New Google readers have no password; "Forgot your password?" can add one.
 - **Sign-in** uses an HttpOnly cookie (`SameSite=Lax`, and `Secure` outside development). After 5 wrong passwords the account is locked for 15 minutes. A wrong password and an unknown email get the same answer, so the API doesn't reveal who has an account.
+- **Rate limits:** from one IP address, at most 10 requests a minute to sign in, sign up, confirm or reset, and 5 requests per 15 minutes that send an email. On top of that, at most 3 emails of one kind go to one address an hour, however many places ask, so the forms can't be used to flood someone's inbox. Too many requests get `429 Too Many Requests` with a `Retry-After` header and a message the forms show. The numbers are settings (`RateLimits` in appsettings). Locally, every request comes through the Vite proxy, so they all count as one address.
+- **Deleting an account** removes it and everything in it (goals, Google link, tokens) at once, through the database's cascade delete. The reader must type their email address, and their password if they have one; wrong passwords there count towards the lockout.
+- **Security headers** on every API answer: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` and a `Permissions-Policy` that turns off camera, microphone and location.
+- **Content Security Policy for the pages:** the production build adds a policy that only lets the browser run scripts and load styles, fonts and images from Tomekeeper itself, so injected code has nothing to run or send to. That is why the small script that sets the theme before the first paint is a file (`web/public/theme.js`) and not inline. The development server runs without it, because hot reloading needs inline code. To try the built site: `npm run build`, then `npx vite preview` (it forwards `/api` like the dev server) and open http://localhost:4173.
 - **Cross-site requests:** every request that changes something must carry the header `X-Tomekeeper-Request`. A form on another site can't add that header, so it can't act on a reader's behalf (the [custom request header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#employing-custom-request-headers-for-ajaxapi) defence).
 - **Errors** come back as [problem details](https://www.rfc-editor.org/rfc/rfc9457) with messages per field (`displayName`, `email`, `password`), written so the front-end can show them as they are.
 
