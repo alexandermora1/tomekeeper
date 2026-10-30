@@ -168,6 +168,11 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("phone_number_confirmed");
 
+                    b.Property<string>("Portrait")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("portrait");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text")
                         .HasColumnName("security_stamp");
@@ -192,6 +197,41 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasDatabaseName("ix_users_normalized_user_name");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Goals.ReadingGoal", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer")
+                        .HasColumnName("year");
+
+                    b.Property<int?>("Books")
+                        .HasColumnType("integer")
+                        .HasColumnName("books");
+
+                    b.Property<int?>("Pages")
+                        .HasColumnType("integer")
+                        .HasColumnName("pages");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("UserId", "Year")
+                        .HasName("pk_reading_goals");
+
+                    b.ToTable("reading_goals", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reading_goals_books", "books IS NULL OR books BETWEEN 1 AND 1000");
+
+                            t.HasCheckConstraint("ck_reading_goals_has_target", "pages IS NOT NULL OR books IS NOT NULL");
+
+                            t.HasCheckConstraint("ck_reading_goals_pages", "pages IS NULL OR pages BETWEEN 1 AND 100000");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
@@ -222,6 +262,16 @@ namespace Tomekeeper.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Goals.ReadingGoal", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reading_goals_users_user_id");
                 });
 #pragma warning restore 612, 618
         }

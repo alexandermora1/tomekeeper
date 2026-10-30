@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) and accounts with email (sign-up, sign-in, email confirmation and password reset, in the API and as pages) are done. Google sign-in and choosing a goal and portrait come next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) accounts with email (sign-up, sign-in, email confirmation and password reset) and the first steps after signing up (a goal for the year and a portrait) are done. Google sign-in comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -60,7 +60,8 @@ The pages:
 | `/sign-in`, `/sign-up` | Sign in, or create an account. Visitors who aren't signed in are sent here, and back to where they were afterwards |
 | `/confirm-email` | Opened from the confirmation email. The reader presses a button to confirm, so email services that open links to scan them don't confirm by accident |
 | `/forgot-password`, `/reset-password` | Ask for a reset link, then choose a new password from the link in the email |
-| `/` | The chronicle, for signed-in readers. It reminds readers to confirm their email until they have |
+| `/first-steps` | Right after signing up: what the goal counts (pages, books or both), how much, and a portrait. New readers are sent here until they have done it |
+| `/` | The chronicle, for signed-in readers. It shows the reader's portrait and goal, and reminds readers to confirm their email until they have |
 
 The forms follow the [GOV.UK error pattern](https://design-system.service.gov.uk/components/error-summary/): after a failed submit, a summary at the top lists every problem and takes the focus, each problem links to its field, and the message also sits next to the field. The messages come from the API, so the rules live in one place. Fields have `autocomplete` values that password managers understand, and the password can be shown while typing. After moving to another page, focus goes to the main content, so screen readers announce the new page.
 
@@ -73,6 +74,9 @@ The accounts API is under `/api/account`:
 | `GET me` | The signed-in reader, or 401 |
 | `POST confirm-email`, `POST resend-confirmation` | Confirms the address with the code from the email, or sends a new one |
 | `POST forgot-password`, `POST reset-password` | Sends a reset link (the answer is the same whether the account exists or not), then sets a new password |
+| `PUT portrait` | Chooses the reader's portrait: `astrologer`, `knight` or `emperor` |
+
+Goals are under `/api/goals/{year}`: `GET` gives the signed-in reader's goal for that year (404 if there is none) and `PUT` sets or changes it, with `kind` (`pages`, `books` or `both`) and the numbers. The year is part of the address because a reader's new year starts at their own midnight; the API accepts last year, this year and next year.
 
 How it is kept safe:
 
@@ -111,7 +115,8 @@ The API tests start the real API in memory and their own PostgreSQL in Docker wi
 tomekeeper/
 ├── api/
 │   ├── Tomekeeper.Api/         the API, set up in Program.cs
-│   │   ├── Accounts/           sign-up, sign-in, emails, error messages
+│   │   ├── Accounts/           sign-up, sign-in, emails, portraits, error messages
+│   │   ├── Goals/              the reader's goal for each year
 │   │   ├── Passwords/          password rules, common password list, breach check
 │   │   ├── Security/           the request header check
 │   │   ├── Data/               EF Core database context and migrations
@@ -122,7 +127,8 @@ tomekeeper/
 │   ├── src/session/            who is signed in, and the guards that send visitors to sign in
 │   ├── src/routing/            focus and page titles when moving between pages
 │   ├── src/components/         shared parts: header, frame, drop cap, footer, buttons
-│   ├── src/components/forms/   text and password fields, error summary
+│   ├── src/components/forms/   text and password fields, radio groups, error summary
+│   ├── src/goals/              goal text and the suggested first goal
 │   ├── src/pages/              one file per page, with its tests beside it
 │   ├── src/test/               test setup, a fake API for the tests
 │   ├── src/styles/             design tokens (light, dark, paper) and base styles

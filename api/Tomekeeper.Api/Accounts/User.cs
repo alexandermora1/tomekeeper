@@ -11,4 +11,8 @@ public sealed class User : IdentityUser<Guid>
     public string DisplayName { get; set; } = "";
 
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>The woodcut that stands for the reader, chosen in the first steps after signing up.
+    /// Null until then.</summary>
+    public Portrait? Portrait { get; set; }
 }

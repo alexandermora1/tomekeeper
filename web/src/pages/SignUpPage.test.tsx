@@ -3,8 +3,8 @@ import { fakeApi, sampleReader, validationProblem } from '../test/fakeApi';
 import { renderApp } from '../test/renderApp';
 
 describe('the sign-up page', () => {
-  it('creates the account and asks the new reader to confirm their email', async () => {
-    const newReader = { ...sampleReader, displayName: 'Alex', email: 'alex@example.no', emailConfirmed: false };
+  it('creates the account and goes on to the first steps', async () => {
+    const newReader = { ...sampleReader, displayName: 'Alex', email: 'alex@example.no', emailConfirmed: false, portrait: null };
     fakeApi.on('POST', '/api/account/register', () => {
       fakeApi.signedIn(newReader);
       return { status: 201, body: newReader };
@@ -16,8 +16,8 @@ describe('the sign-up page', () => {
     await user.type(screen.getByLabelText('Password'), 'lantern harbour winter quill');
     await user.click(screen.getByRole('button', { name: 'Create account' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Your chronicle' })).toBeInTheDocument();
-    expect(screen.getByText('Confirm your email address.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: "Two choices, then you're in" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/first-steps');
     expect(fakeApi.sent('POST', '/api/account/register')[0]?.body).toEqual({
       displayName: 'Alex',
       email: 'alex@example.no',

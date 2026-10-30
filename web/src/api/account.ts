@@ -1,11 +1,15 @@
 import { ApiError, apiRequest } from './client';
 
+export type PortraitId = 'astrologer' | 'knight' | 'emperor';
+
 /** The signed-in reader, as /api/account/me returns it. */
 export interface Reader {
   id: string;
   displayName: string;
   email: string;
   emailConfirmed: boolean;
+  /** Null until the reader has taken the first steps after signing up. */
+  portrait: PortraitId | null;
 }
 
 export interface RegisterInput {
@@ -32,6 +36,7 @@ export const account = {
   forgotPassword: (input: { email: string }) => apiRequest('POST', '/api/account/forgot-password', input),
   resetPassword: (input: { email: string; code: string; password: string }) =>
     apiRequest('POST', '/api/account/reset-password', input),
+  setPortrait: (portrait: PortraitId) => apiRequest<Reader>('PUT', '/api/account/portrait', { portrait }),
 };
 
 /** Asks the API who is signed in. Resolves to null when nobody is. */

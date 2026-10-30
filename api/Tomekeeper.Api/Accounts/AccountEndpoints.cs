@@ -9,10 +9,13 @@ public sealed record SignInRequest(string? Email, string? Password, bool Remembe
 public sealed record ConfirmEmailRequest(Guid UserId, string? Code);
 public sealed record ForgotPasswordRequest(string? Email);
 public sealed record ResetPasswordRequest(string? Email, string? Code, string? Password);
+public sealed record PortraitRequest(string? Portrait);
 
-public sealed record MeResponse(Guid Id, string DisplayName, string Email, bool EmailConfirmed)
+/// <param name="Portrait">"astrologer", "knight" or "emperor"; null until the reader has taken the first steps.</param>
+public sealed record MeResponse(Guid Id, string DisplayName, string Email, bool EmailConfirmed, string? Portrait)
 {
-    public static MeResponse From(User user) => new(user.Id, user.DisplayName, user.Email ?? "", user.EmailConfirmed);
+    public static MeResponse From(User user) =>
+        new(user.Id, user.DisplayName, user.Email ?? "", user.EmailConfirmed, user.Portrait?.ToApiName());
 }
 
 /// <summary>
@@ -38,6 +41,7 @@ public static class AccountEndpoints
         account.MapPost("/resend-confirmation", ResendConfirmation).RequireAuthorization();
         account.MapPost("/forgot-password", ForgotPassword);
         account.MapPost("/reset-password", ResetPassword);
+        account.MapPut("/portrait", SetPortrait).RequireAuthorization();
 
         return account;
     }
@@ -200,6 +204,21 @@ public static class AccountEndpoints
         await users.SetLockoutEndDateAsync(user, null);
         await users.ResetAccessFailedCountAsync(user);
         return TypedResults.NoContent();
+    }
+
+    /// <summary>Chooses the woodcut that stands for the reader.</summary>
+    private static async Task<Results<Ok<MeResponse>, ValidationProblem, UnauthorizedHttpResult>> SetPortrait(
+        PortraitRequest request, ClaimsPrincipal principal, UserManager<User> users)
+    {
+        var portrait = Portraits.FromApiName(request.Portrait);
+        if (portrait is null) return new FieldErrors().Add("portrait", "Choose a portrait.").ToProblem();
+
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return TypedResults.Unauthorized();
+
+        user.Portrait = portrait;
+        await users.UpdateAsync(user);
+        return TypedResults.Ok(MeResponse.From(user));
     }
 
     private static async Task SendConfirmationAsync(

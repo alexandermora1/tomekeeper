@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { ChroniclePage } from './pages/ChroniclePage';
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
+import { FirstStepsPage } from './pages/FirstStepsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -28,6 +29,14 @@ export function App() {
             element={
               <RequireReader>
                 <ChroniclePage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/first-steps"
+            element={
+              <RequireReader beforeFirstSteps>
+                <FirstStepsPage />
               </RequireReader>
             }
           />

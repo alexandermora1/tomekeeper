@@ -2,13 +2,23 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { useSession } from './sessionContext';
 
-/** Shows the page only to signed-in readers. Others go to the sign-in page and come back here afterwards. */
-export function RequireReader({ children }: { children: ReactNode }) {
-  const { status } = useSession();
+interface RequireReaderProps {
+  /** Let readers in who haven't chosen their goal and portrait yet. Only the first steps page does this. */
+  beforeFirstSteps?: boolean;
+  children: ReactNode;
+}
+
+/**
+ * Shows the page only to signed-in readers. Others go to the sign-in page and come back here afterwards.
+ * New readers go to the first steps page until they have chosen a goal and a portrait.
+ */
+export function RequireReader({ beforeFirstSteps = false, children }: RequireReaderProps) {
+  const { status, reader } = useSession();
   const location = useLocation();
 
   if (status === 'loading') return null;
-  if (status === 'signed-out') return <Navigate to="/sign-in" replace state={{ from: location }} />;
+  if (!reader) return <Navigate to="/sign-in" replace state={{ from: location }} />;
+  if (reader.portrait === null && !beforeFirstSteps) return <Navigate to="/first-steps" replace />;
   return children;
 }
 

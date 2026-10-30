@@ -70,7 +70,8 @@ describe('Dark theme toggle', () => {
     window.__prefersDark = true;
     renderApp('/sign-in');
     expect(await screen.findByRole('button', { name: 'Dark theme' })).toHaveAttribute('aria-pressed', 'true');
-    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    // The page appears once the session has loaded; the theme is set on <html> just after that render.
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('data-theme', 'dark'));
   });
 
   it('switches the theme and remembers the choice', async () => {

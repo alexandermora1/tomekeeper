@@ -1,0 +1,68 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 24px;
+}
+
+.numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+/* Numbers of pages or books are short, so the inputs are too */
+.numbers input {
+  width: 10rem;
+}
+
+.note {
+  margin: -6px 0 0;
+  font-size: 1rem; /* 16px */
+  color: var(--muted);
+}
+
+.portraits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  margin-top: 4px;
+}
+
+.portrait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.portraitName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 1.0625rem; /* 17px */
+}
+
+.portraitName input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+/* The chosen portrait gets a red frame, and the frame shows keyboard focus too */
+.portrait:has(input:checked) > :first-child {
+  border: 3px solid var(--accent);
+}
+
+.portrait:has(input:focus-visible) > :first-child {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}

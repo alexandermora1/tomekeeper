@@ -35,6 +35,18 @@
   max-width: 820px;
 }
 
+.reader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 24px;
+}
+
+.reader > div {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
 .note {
   margin: 0;
 }

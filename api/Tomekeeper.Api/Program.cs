@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Data;
+using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
 using Tomekeeper.Api.Security;
@@ -87,6 +88,9 @@ builder.Services.AddHttpClient<IBreachedPasswordCheck, PwnedPasswordsClient>(cli
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Tomekeeper/0.1 (+https://github.com/alexandermora1/tomekeeper)");
 });
 
+// The clock, as a service so tests could set the time.
+builder.Services.AddSingleton(TimeProvider.System);
+
 builder.Services.AddHealthChecks().AddDbContextCheck<TomekeeperDbContext>(HealthEndpoints.DatabaseCheck);
 builder.Services.AddProblemDetails();
 
@@ -107,6 +111,7 @@ app.UseAuthorization();
 
 app.MapHealthEndpoints();
 app.MapAccountEndpoints();
+app.MapGoalEndpoints();
 
 app.Run();
 
