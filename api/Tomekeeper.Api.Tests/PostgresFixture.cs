@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using Tomekeeper.Api.Data;
 
 [assembly: AssemblyFixture(typeof(Tomekeeper.Api.Tests.PostgresFixture))]
 
@@ -21,7 +23,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     private string _serverConnectionString = "";
     private readonly string _databaseName = $"tomekeeper_test_{Guid.NewGuid():N}";
 
-    /// <summary>Connection string to this run's own database. The API creates it on startup.</summary>
+    /// <summary>Connection string to this run's own database, with all migrations applied.</summary>
     public string ConnectionString { get; private set; } = "";
 
     public async ValueTask InitializeAsync()
@@ -39,6 +41,12 @@ public sealed class PostgresFixture : IAsyncLifetime
         }
 
         ConnectionString = new NpgsqlConnectionStringBuilder(_serverConnectionString) { Database = _databaseName }.ConnectionString;
+
+        // Create the database and its tables once, before any test starts the API. Test classes run in
+        // parallel, and each would otherwise try to create the same database at the same moment.
+        var options = new DbContextOptionsBuilder<TomekeeperDbContext>().UseNpgsql(ConnectionString).UseSnakeCaseNamingConvention().Options;
+        await using var context = new TomekeeperDbContext(options);
+        await context.Database.MigrateAsync();
     }
 
     public async ValueTask DisposeAsync()

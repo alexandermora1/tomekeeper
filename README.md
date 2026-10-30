@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, steps 1.1 and 1.2 are done: the front-end foundation (design, light and dark themes, Plain script) and the back-end skeleton (API, database, tests). See the [roadmap](docs/roadmap.md).
+> **Status:** early development. In stage 1, the front-end foundation (design, light and dark themes, Plain script), the back-end skeleton (API, database, tests) and the accounts API (sign-up, sign-in, email confirmation, password reset) are done. The sign-in pages come next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -17,7 +17,7 @@ A reading tracker where the yearly goal counts **pages**, not just books. You lo
 | Part | Choice |
 | --- | --- |
 | Front-end | React 19, TypeScript, Vite, CSS modules |
-| Back-end | ASP.NET Core on .NET 10 (minimal API), Entity Framework Core; ASP.NET Core Identity for email and Google sign-in from step 1.3 |
+| Back-end | ASP.NET Core on .NET 10 (minimal API), Entity Framework Core with snake_case tables, ASP.NET Core Identity (email accounts now, Google sign-in in step 1.4) |
 | Database | PostgreSQL 18 (Docker Compose locally) |
 | Tests | Vitest and Testing Library for the front-end; xUnit v3 with Testcontainers for the API |
 | CI | GitHub Actions, one workflow for the front-end and one for the API |
@@ -49,6 +49,37 @@ The front-end forwards everything under `/api` to the API, so http://localhost:5
 
 Stop the database with `docker compose down`. Your data stays in a Docker volume; `docker compose down -v` deletes it.
 
+In development the API creates and updates the tables itself when it starts. It doesn't send real emails yet: the confirmation and password-reset emails are written to the API's log in the terminal, so you can copy the link from there.
+
+## Accounts and security
+
+The accounts API is under `/api/account`:
+
+| Request | What it does |
+| --- | --- |
+| `POST register` | Creates an account, signs the reader in and sends an email to confirm the address |
+| `POST sign-in`, `POST sign-out` | Signs in with email and password, or out |
+| `GET me` | The signed-in reader, or 401 |
+| `POST confirm-email`, `POST resend-confirmation` | Confirms the address with the code from the email, or sends a new one |
+| `POST forgot-password`, `POST reset-password` | Sends a reset link (the answer is the same whether the account exists or not), then sets a new password |
+
+How it is kept safe:
+
+- **Passwords** follow [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html): at least 15 characters, at most 256, any characters allowed, no rules like "one capital letter". A password is refused if it is on a list of about 49,000 common passwords, is a common password with digits or symbols around it, repeats itself, follows the keyboard or the alphabet, or contains the reader's name or email. It is also checked against [Pwned Passwords](https://haveibeenpwned.com/Passwords): only the first 5 characters of its SHA-1 hash leave the server, and if the service can't be reached the check is skipped rather than blocking sign-up. Passwords are stored as hashes by ASP.NET Core Identity.
+- **Sign-in** uses an HttpOnly cookie (`SameSite=Lax`, and `Secure` outside development). After 5 wrong passwords the account is locked for 15 minutes. A wrong password and an unknown email get the same answer, so the API doesn't reveal who has an account.
+- **Cross-site requests:** every request that changes something must carry the header `X-Tomekeeper-Request`. A form on another site can't add that header, so it can't act on a reader's behalf (the [custom request header](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#employing-custom-request-headers-for-ajaxapi) defence).
+- **Errors** come back as [problem details](https://www.rfc-editor.org/rfc/rfc9457) with messages per field (`displayName`, `email`, `password`), written so the front-end can show them as they are.
+
+To try it with curl while the API runs:
+
+```sh
+curl -i -c cookies.txt -H "Content-Type: application/json" -H "X-Tomekeeper-Request: 1" \
+  -d '{"displayName":"Alex","email":"alex@example.no","password":"lantern harbour winter quill"}' \
+  http://localhost:5080/api/account/register
+
+curl -b cookies.txt http://localhost:5080/api/account/me
+```
+
 ## Tests
 
 ```sh
@@ -68,7 +99,12 @@ The API tests start the real API in memory and their own PostgreSQL in Docker wi
 ```
 tomekeeper/
 ├── api/
-│   ├── Tomekeeper.Api/         the API: Program.cs, Data/ (EF Core), Health/
+│   ├── Tomekeeper.Api/         the API, set up in Program.cs
+│   │   ├── Accounts/           sign-up, sign-in, emails, error messages
+│   │   ├── Passwords/          password rules, common password list, breach check
+│   │   ├── Security/           the request header check
+│   │   ├── Data/               EF Core database context and migrations
+│   │   └── Health/             health checks
 │   └── Tomekeeper.Api.Tests/   xUnit tests
 ├── web/                        front-end (React + TypeScript + Vite)
 │   ├── src/components/         shared parts: header, frame, drop cap, footer
@@ -93,6 +129,8 @@ The site aims for WCAG 2.2 AA. Every colour pair is checked for contrast (see [d
 
 The first version is written with Claude (an AI assistant) from my design decisions, in small steps that I review. Afterwards I rebuild it by hand as a course for myself, using this version as the answer key.
 
-## Image credits
+## Credits
 
 All images are in the public domain. Details are in [docs/image-credits.md](docs/image-credits.md). Fonts: [Grenze Gotisch](https://fonts.google.com/specimen/Grenze+Gotisch), [Alegreya and Alegreya SC](https://www.huertatipografica.com/en/fonts/alegreya-ht-pro), all under the SIL Open Font License and self-hosted.
+
+The common password list comes from [zxcvbn-ts](https://github.com/zxcvbn-ts/zxcvbn) (MIT licence, see `api/Tomekeeper.Api/Passwords/common-passwords.LICENSE.txt`). The breach check uses the free [Pwned Passwords](https://haveibeenpwned.com/Passwords) API by Troy Hunt.
