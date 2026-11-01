@@ -1,0 +1,47 @@
+import { ApiError, apiRequest } from './client';
+
+/** A book in Tomekeeper's own catalogue. */
+export interface Book {
+  id: string;
+  openLibraryKey: string | null;
+  title: string;
+  subtitle: string | null;
+  authors: string[];
+  firstPublishedYear: number | null;
+  pageCount: number | null;
+  coverId: number | null;
+}
+
+/** A book Open Library found. `bookId` is set when it is already in Tomekeeper's catalogue. */
+export interface BookSearchResult {
+  openLibraryKey: string;
+  title: string;
+  subtitle: string | null;
+  authors: string[];
+  firstPublishedYear: number | null;
+  pageCount: number | null;
+  coverId: number | null;
+  editionCount: number | null;
+  bookId: string | null;
+}
+
+export interface BookSearch {
+  query: string;
+  /** How many books Open Library found in all; only the first 20 come back. */
+  total: number;
+  results: BookSearchResult[];
+}
+
+export const books = {
+  search: (query: string) => apiRequest<BookSearch>('GET', `/api/books/search?q=${encodeURIComponent(query)}`),
+  /** Saves an Open Library book in the catalogue (or finds it there) and returns it. */
+  addFromOpenLibrary: (key: string) => apiRequest<Book>('POST', `/api/books/open-library/${encodeURIComponent(key)}`),
+  async get(id: string): Promise<Book | null> {
+    try {
+      return await apiRequest<Book>('GET', `/api/books/${encodeURIComponent(id)}`);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+  },
+};

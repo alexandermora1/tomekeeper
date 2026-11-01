@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
+using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Data;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
@@ -91,6 +92,21 @@ builder.Services.AddHttpClient<IBreachedPasswordCheck, PwnedPasswordsClient>(cli
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Tomekeeper/0.1 (+https://github.com/alexandermora1/tomekeeper)");
 });
 
+// Open Library, for finding books (Books/OpenLibraryClient.cs).
+builder.Services.AddMemoryCache();
+builder.Services.Configure<OpenLibraryOptions>(builder.Configuration.GetSection(OpenLibraryOptions.Section));
+builder.Services.AddSingleton<OpenLibraryRateLimiter>();
+builder.Services.AddTransient<OpenLibraryThrottle>();
+builder.Services.AddHttpClient<OpenLibraryClient>((services, client) =>
+    {
+        var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenLibraryOptions>>().Value;
+        client.BaseAddress = new Uri(options.BaseUrl);
+        client.Timeout = TimeSpan.FromSeconds(10);
+        var contact = string.IsNullOrWhiteSpace(options.ContactEmail) ? "+https://github.com/alexandermora1/tomekeeper" : options.ContactEmail.Trim();
+        client.DefaultRequestHeaders.UserAgent.ParseAdd($"Tomekeeper/0.1 ({contact})");
+    })
+    .AddHttpMessageHandler<OpenLibraryThrottle>();
+
 // The clock, as a service so tests could set the time.
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -120,6 +136,7 @@ app.UseAuthorization();
 app.MapHealthEndpoints();
 app.MapAccountEndpoints();
 app.MapGoalEndpoints();
+app.MapBookEndpoints();
 
 app.Run();
 

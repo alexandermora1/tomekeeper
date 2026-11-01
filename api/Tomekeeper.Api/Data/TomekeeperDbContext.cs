@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
+using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Goals;
 
 namespace Tomekeeper.Api.Data;
@@ -9,12 +10,14 @@ namespace Tomekeeper.Api.Data;
 /// <summary>
 /// The database. Table and column names are snake_case, as is usual in PostgreSQL.
 /// IdentityUserContext gives accounts without roles: users, user_claims, user_logins (Google, from step 1.4)
-/// and user_tokens. Our own tables: reading_goals.
+/// and user_tokens. Our own tables: reading_goals and books.
 /// </summary>
 public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> options)
     : IdentityUserContext<User, Guid>(options)
 {
     public DbSet<ReadingGoal> Goals => Set<ReadingGoal>();
+
+    public DbSet<Book> Books => Set<Book>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -47,6 +50,18 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             });
             goal.HasKey(g => new { g.UserId, g.Year });
             goal.HasOne<User>().WithMany().HasForeignKey(g => g.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<Book>(book =>
+        {
+            book.ToTable("books");
+            book.Property(b => b.OpenLibraryKey).HasMaxLength(Book.OpenLibraryKeyMaxLength);
+            // Each Open Library work is in the catalogue at most once. Books added by hand have no key.
+            book.HasIndex(b => b.OpenLibraryKey).IsUnique();
+            book.Property(b => b.Title).HasMaxLength(Book.TitleMaxLength).IsRequired();
+            book.Property(b => b.Subtitle).HasMaxLength(Book.TitleMaxLength);
+            // A PostgreSQL text[] column: author names in order.
+            book.Property(b => b.Authors).IsRequired();
         });
     }
 }

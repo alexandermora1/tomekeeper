@@ -3,6 +3,7 @@ import { ChroniclePage } from './pages/ChroniclePage';
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { FirstStepsPage } from './pages/FirstStepsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { LibraryPage } from './pages/LibraryPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignInPage } from './pages/SignInPage';
@@ -38,6 +39,14 @@ export function App() {
             element={
               <RequireReader beforeFirstSteps>
                 <FirstStepsPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/library"
+            element={
+              <RequireReader>
+                <LibraryPage />
               </RequireReader>
             }
           />

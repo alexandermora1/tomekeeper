@@ -17,6 +17,9 @@ public sealed class RateLimitSettings
 
     /// <summary>Emails of one kind sent to one address per hour, however many IP addresses ask.</summary>
     public int EmailsPerAddressPerHour { get; set; } = 3;
+
+    /// <summary>Book searches (which go on to Open Library) per minute from one IP address.</summary>
+    public int SearchRequestsPerMinute { get; set; } = 30;
 }
 
 /// <summary>
@@ -28,6 +31,7 @@ public static class RateLimits
 {
     public const string AccountPolicy = "accounts";
     public const string EmailPolicy = "emails";
+    public const string SearchPolicy = "search";
     public const string TooManyMessage = "Too many attempts from this connection. Wait a little and try again.";
 
     public static IServiceCollection AddTomekeeperRateLimits(this IServiceCollection services, IConfiguration configuration)
@@ -59,6 +63,10 @@ public static class RateLimits
             options.AddPolicy(EmailPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
                 ClientAddress(http),
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = settings.EmailRequestsPer15Minutes, Window = TimeSpan.FromMinutes(15) }));
+
+            options.AddPolicy(SearchPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+                ClientAddress(http),
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = settings.SearchRequestsPerMinute, Window = TimeSpan.FromMinutes(1) }));
         });
 
         services.AddSingleton(new EmailLimiter(settings.EmailsPerAddressPerHour));

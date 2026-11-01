@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, has begun: readers can search Open Library. Shelves come next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -70,6 +70,23 @@ Without this, the site works with email and password only, and the Google button
 The button is a plain link to the API, which sends the reader to Google's own sign-in page. No Google script runs on Tomekeeper's pages. Google is asked only for the reader's name and email address (the `openid`, `profile` and `email` scopes).
 
 In development the API creates and updates the tables itself when it starts. It doesn't send real emails yet: the confirmation and password-reset emails are written to the API's log in the terminal. The links in them open the pages on http://localhost:5173, so you can copy a link from the terminal into the browser.
+
+## Books and the Library
+
+The Library page (`/library`) searches [Open Library](https://openlibrary.org) through the API. The search is part of the address (`/library?q=dune`), so the back button and links keep it. Books are shown with a small woodcut title page: the gold initial of the title under a coloured band.
+
+| Request (under `/api/books`) | What it does |
+| --- | --- |
+| `GET search?q=…` | Searches Open Library and returns the first 20 works, with title, authors, first year, a typical page count and whether the book is already in Tomekeeper's catalogue |
+| `POST open-library/{key}` | Saves an Open Library work (such as `OL27448W`) in Tomekeeper's own `books` table, or finds it there. The details are fetched from Open Library again, never taken from the request, because the catalogue is shared |
+| `GET {id}` | A book from the catalogue |
+
+Following [Open Library's rules for apps](https://openlibrary.org/developers/api), the API says who it is in the `User-Agent` header, keeps all its calls under 3 a second, and remembers each search for 10 minutes instead of asking again. Searching needs a signed-in reader and is limited to 30 a minute per IP address. If Open Library is down, the page says so.
+
+Settings (in appsettings, or with `dotnet user-secrets` as for Google):
+
+- `OpenLibrary:ContactEmail`: Open Library asks apps for a contact address, and gives identified apps a higher limit. It is added to the `User-Agent` header.
+- `OpenLibrary:BaseUrl`: where Open Library is (`https://openlibrary.org/` by default). Tests and offline work can point it at a stand-in.
 
 ## Accounts and security
 
@@ -146,6 +163,7 @@ tomekeeper/
 │   ├── Tomekeeper.Api/         the API, set up in Program.cs
 │   │   ├── Accounts/           sign-up, sign-in, emails, portraits, error messages
 │   │   ├── Goals/              the reader's goal for each year
+│   │   ├── Books/              the book catalogue and the Open Library client
 │   │   ├── Passwords/          password rules, common password list, breach check
 │   │   ├── Security/           the request header check
 │   │   ├── Data/               EF Core database context and migrations
@@ -185,5 +203,7 @@ The first version is written with Claude (an AI assistant) from my design decisi
 All images are in the public domain. Details are in [docs/image-credits.md](docs/image-credits.md). Fonts: [Grenze Gotisch](https://fonts.google.com/specimen/Grenze+Gotisch), [Alegreya and Alegreya SC](https://www.huertatipografica.com/en/fonts/alegreya-ht-pro), all under the SIL Open Font License and self-hosted.
 
 The "Sign in with Google" button uses [Google Sans](https://fonts.google.com/specimen/Google+Sans) (SIL Open Font License, self-hosted) and Google's "G" logo, as [Google's branding guidelines](https://developers.google.com/identity/branding-guidelines) require.
+
+Book data comes from [Open Library](https://openlibrary.org), the open catalogue of the Internet Archive.
 
 The common password list comes from [zxcvbn-ts](https://github.com/zxcvbn-ts/zxcvbn) (MIT licence, see `api/Tomekeeper.Api/Passwords/common-passwords.LICENSE.txt`). The breach check uses the free [Pwned Passwords](https://haveibeenpwned.com/Passwords) API by Troy Hunt.

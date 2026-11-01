@@ -1,0 +1,30 @@
+.cover {
+  display: block;
+  flex: none;
+  width: 64px;
+  height: 96px;
+  padding: 3px;
+  border: 2px solid var(--ink);
+  background: var(--raised);
+}
+
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border: 1px solid var(--ink);
+  border-top: 8px solid var(--seal-red);
+}
+
+.initial {
+  width: 46px;
+  height: 46px;
+}
+
+/* For titles that start with a number or a letter outside the woodcut alphabet */
+.letter {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+}

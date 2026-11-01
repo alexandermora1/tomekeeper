@@ -3,11 +3,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Tomekeeper.Api.Accounts;
+using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Passwords;
 using Tomekeeper.Api.Security;
 
@@ -33,6 +35,8 @@ public sealed class TomekeeperApiFactory(
 
     public FakeGoogle Google { get; } = new();
 
+    public FakeOpenLibrary OpenLibrary { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(environment);
@@ -53,6 +57,8 @@ public sealed class TomekeeperApiFactory(
             services.AddSingleton<IBreachedPasswordCheck>(Breaches);
             // Calls that would go to Google's servers (code for token, then who the reader is) go to the fake.
             services.Configure<GoogleOptions>(GoogleDefaults.AuthenticationScheme, options => options.BackchannelHttpHandler = Google);
+            // Searches go to the fake Open Library. The throttle in front of it stays, as in the real API.
+            services.AddHttpClient<OpenLibraryClient>().ConfigurePrimaryHttpMessageHandler(() => OpenLibrary);
         });
     }
 
@@ -131,3 +137,50 @@ public sealed class FakeGoogle : HttpMessageHandler
 
 /// <param name="Id">Google's id for the account ("sub"), which never changes.</param>
 public sealed record GoogleUser(string Id, string? Email, bool EmailVerified, string? Name);
+
+/// <summary>
+/// Plays Open Library's search API: answers search.json from <see cref="Works"/>, the way the real one shapes its
+/// answer, and records each request. Set <see cref="Down"/> to act as if Open Library is unavailable.
+/// </summary>
+public sealed class FakeOpenLibrary : HttpMessageHandler
+{
+    public List<Dictionary<string, object?>> Works { get; } =
+    [
+        Work("OL27448W", "The Lord of the Rings", ["J.R.R. Tolkien"], 1954, 1193, 9255566),
+        Work("OL893415W", "Dune", ["Frank Herbert"], 1965, 604, 11481354),
+        Work("OL5735363W", "The Name of the Wind", ["Patrick Rothfuss"], 2007, 662, null),
+    ];
+
+    public ConcurrentQueue<HttpRequestMessage> Requests { get; } = new();
+
+    public bool Down { get; set; }
+
+    public static Dictionary<string, object?> Work(string key, string title, string[] authors, int? year, int? pages, int? cover) => new()
+    {
+        ["key"] = $"/works/{key}",
+        ["title"] = title,
+        ["author_name"] = authors,
+        ["first_publish_year"] = year,
+        ["number_of_pages_median"] = pages,
+        ["cover_i"] = cover,
+        ["edition_count"] = 12,
+    };
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        Requests.Enqueue(request);
+        if (Down) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        if (request.RequestUri!.AbsolutePath != "/search.json") return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var q = QueryHelpers.ParseQuery(request.RequestUri.Query)["q"].ToString();
+        var keyMatch = Regex.Match(q, "^key:\"(/works/OL\\d+W)\"$");
+        var docs = Works.Where(w => keyMatch.Success
+            ? (string)w["key"]! == keyMatch.Groups[1].Value
+            : ((string)w["title"]!).Contains(q, StringComparison.OrdinalIgnoreCase)
+              || ((string[])w["author_name"]!).Any(a => a.Contains(q, StringComparison.OrdinalIgnoreCase))).ToList();
+
+        // The real API sends both spellings of the total.
+        var body = new Dictionary<string, object> { ["numFound"] = docs.Count, ["num_found"] = docs.Count, ["start"] = 0, ["docs"] = docs };
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(body) });
+    }
+}

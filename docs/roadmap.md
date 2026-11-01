@@ -14,9 +14,17 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | 1.4b | Google sign-in, server side with ASP.NET Core's Google handler (no Google script in the page): "Sign in with Google" and "Sign up with Google" following Google's branding rules, accounts linked by Google's id, linking to an existing account only when its email is confirmed, only the openid, email and profile scopes, no Google photo. The button only shows when the API has a Google client set up | Done |
 | 1.5 | Hardening: rate limits per IP address on the account endpoints (429 with Retry-After) and at most 3 emails of one kind per address an hour; security headers on API answers; a Content Security Policy in the production build (the theme script moved to a file); a settings page where readers delete their account, confirmed with their email address and password | Done |
 
+## Stage 2: Library
+
+| Step | What | Status |
+| --- | --- | --- |
+| 2.1 | Find books: an Open Library client (User-Agent, under 3 calls a second, searches remembered for 10 minutes), the `books` table as Tomekeeper's own catalogue, `GET /api/books/search`, `POST /api/books/open-library/{key}`, `GET /api/books/{id}`, and the Library page with "Find a book" from the 2c design | Done |
+| 2.2 | Shelves: Reading now, Want to read, Finished and Set aside; adding a book from the search results (which saves it in the catalogue); "Your shelves" on the Library page | Next |
+| 2.3 | The book page: details, the reader's shelf and page count, covers | |
+| 2.4 | Adding a book by hand, for books Open Library doesn't have | |
+
 ## Later stages
 
-2. **Library (next):** search Open Library, keep books in our own catalogue, shelves (Reading now, Want to read, Finished, Set aside), add a book by hand.
 3. **Progress and goals:** log by page or percent, the yearly goal, the Chronicle dashboard and the Twelve Labours (wheel on wide screens, month boxes on phones).
 4. **The game:** XP and levels, quests, attributes, gear, volumes.
 5. **Fellowship:** profiles with "see your profile as", friends, reviews, block and report. Private by default.
