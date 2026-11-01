@@ -1,5 +1,5 @@
 import { ApiError, apiRequest } from './client';
-import type { ShelfId } from './shelves';
+import type { ShelfEntry, ShelfId } from './shelves';
 
 /** A book in Tomekeeper's own catalogue. */
 export interface Book {
@@ -40,7 +40,19 @@ export interface BookSearch {
 /** A cover image, through Tomekeeper's API: "m" is about 180 pixels wide, "l" about 500. */
 export const coverUrl = (coverId: number, size: 'm' | 'l') => `/api/covers/${coverId}?size=${size}`;
 
+/** A book Open Library doesn't have, typed in by the reader, and the shelf to put it on. */
+export interface HandBook {
+  title: string;
+  subtitle: string;
+  authors: string[];
+  firstPublishedYear: number | null;
+  pageCount: number | null;
+  shelf: ShelfId;
+}
+
 export const books = {
+  /** Adds a book by hand and puts it on a shelf. Only the reader who added it can see it. */
+  addByHand: (book: HandBook) => apiRequest<ShelfEntry>('POST', '/api/books', book),
   search: (query: string) => apiRequest<BookSearch>('GET', `/api/books/search?q=${encodeURIComponent(query)}`),
   /** Saves an Open Library book in the catalogue (or finds it there) and returns it. */
   addFromOpenLibrary: (key: string) => apiRequest<Book>('POST', `/api/books/open-library/${encodeURIComponent(key)}`),

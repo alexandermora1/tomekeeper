@@ -103,10 +103,10 @@ public static class ShelfEndpoints
             return new FieldErrors().Add("shelf", ChooseShelfMessage).ToProblem();
         }
 
-        var book = await db.Books.AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
+        var userId = principal.GetUserId();
+        var book = await db.Books.AsNoTracking().VisibleTo(userId).FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
         if (book is null) return TypedResults.NotFound();
 
-        var userId = principal.GetUserId();
         for (var attempt = 1; ; attempt++)
         {
             // PostgreSQL keeps times to the microsecond and .NET to a tenth of one. Cut off the rest, so the
@@ -144,12 +144,16 @@ public static class ShelfEndpoints
         }
     }
 
-    /// <summary>Takes a book off the reader's shelves. The book stays in the catalogue for everyone else.</summary>
+    /// <summary>
+    /// Takes a book off the reader's shelves. A book from Open Library stays in the catalogue for everyone else;
+    /// a book the reader added by hand is deleted, since nobody else can see it.
+    /// </summary>
     private static async Task<NoContent> TakeOff(
         Guid bookId, ClaimsPrincipal principal, TomekeeperDbContext db, CancellationToken cancellationToken)
     {
         var userId = principal.GetUserId();
         await db.ShelfEntries.Where(e => e.UserId == userId && e.BookId == bookId).ExecuteDeleteAsync(cancellationToken);
+        await db.Books.Where(b => b.Id == bookId && b.AddedById == userId).ExecuteDeleteAsync(cancellationToken);
         return TypedResults.NoContent();
     }
 }

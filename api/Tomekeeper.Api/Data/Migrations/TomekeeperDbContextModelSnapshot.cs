@@ -211,6 +211,10 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("added_at");
 
+                    b.Property<Guid?>("AddedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("added_by_id");
+
                     b.PrimitiveCollection<List<string>>("Authors")
                         .IsRequired()
                         .HasColumnType("text[]")
@@ -250,6 +254,9 @@ namespace Tomekeeper.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_books");
+
+                    b.HasIndex("AddedById")
+                        .HasDatabaseName("ix_books_added_by_id");
 
                     b.HasIndex("OpenLibraryKey")
                         .IsUnique()
@@ -368,6 +375,15 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasConstraintName("fk_user_tokens_users_user_id");
                 });
 
+            modelBuilder.Entity("Tomekeeper.Api.Books.Book", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("AddedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_books_users_added_by_id");
+                });
+
             modelBuilder.Entity("Tomekeeper.Api.Goals.ReadingGoal", b =>
                 {
                     b.HasOne("Tomekeeper.Api.Accounts.User", null)
@@ -383,7 +399,7 @@ namespace Tomekeeper.Api.Data.Migrations
                     b.HasOne("Tomekeeper.Api.Books.Book", "Book")
                         .WithMany()
                         .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("fk_shelf_entries_books_book_id");
 

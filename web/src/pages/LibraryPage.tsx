@@ -167,6 +167,10 @@ export function LibraryPage() {
           </ul>
         )}
 
+        <p className={styles.byHand}>
+          Not in Open Library? <Link to="/library/add">Add a book by hand</Link>
+        </p>
+
         <Notice className={styles.source}>
           Results come from <a href="https://openlibrary.org">Open Library</a>, the open catalogue of the Internet Archive. A
           book is saved in Tomekeeper's own catalogue the first time someone puts it on a shelf.

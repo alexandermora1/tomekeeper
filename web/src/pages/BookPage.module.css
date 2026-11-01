@@ -89,3 +89,13 @@
 .status:empty {
   margin: 0;
 }
+
+.lead {
+  margin: 10px 0 0;
+  font-size: 1.25rem; /* 20px */
+}
+
+.handForm {
+  max-width: 640px;
+  margin-top: 28px;
+}

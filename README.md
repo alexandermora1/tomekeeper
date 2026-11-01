@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is under way: readers can search Open Library, keep books on four shelves and open a page for each book. Adding books by hand comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -110,6 +110,10 @@ The shelf list changes nothing by itself: the reader chooses, then presses the b
 ### The book page
 
 Each book in the catalogue has a page at `/books/{id}`, linked from its title on the shelves and in search results: the large cover, authors, first year, page count and a link to Open Library, then the reader's shelf with the same shelf list, and the page count of their own edition. Progress (stage 3) will count against that page count.
+
+### Books added by hand
+
+For books Open Library doesn't have, `/library/add` (linked under the search) takes a title, subtitle, authors (separated by commas), the year and the page count, and a shelf. `POST /api/books` saves the book and puts it on that shelf in one go. These books belong to the reader who added them (`books.added_by_id`): nobody else can see or shelve them, removing one from the shelves deletes it (the button says **Delete**), and they go with the account. The shelf entries point to books with `ON DELETE NO ACTION`, which PostgreSQL checks at the end of the statement, so deleting an account can remove the reader's shelf entries and their own books together.
 
 The `shelf_entries` table has one row per reader and book, so a book can't be on two shelves. Search results say which shelf each book is on, if any. Shelves belong to the reader alone (profiles come in stage 5), go with the account when it is deleted, and hold at most 10,000 books, so one account can't fill the database.
 

@@ -7,6 +7,7 @@ using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Data;
 using Tomekeeper.Api.Security;
 using Tomekeeper.Api.Shelves;
+using ShelfNames = Tomekeeper.Api.Shelves.Shelves;
 
 namespace Tomekeeper.Api.Books;
 
@@ -40,6 +41,10 @@ public sealed record BookSearchResult(
 
 public sealed record BookSearchResponse(string Query, int Total, IReadOnlyList<BookSearchResult> Results);
 
+/// <summary>A book Open Library doesn't have, typed in by the reader, and the shelf to put it on.</summary>
+public sealed record HandBookRequest(
+    string? Title, string? Subtitle, IReadOnlyList<string?>? Authors, int? FirstPublishedYear, int? PageCount, string? Shelf);
+
 /// <summary>Finding books on Open Library and keeping them in Tomekeeper's own catalogue, under /api/books.</summary>
 public static partial class BookEndpoints
 {
@@ -54,6 +59,7 @@ public static partial class BookEndpoints
         books.MapGet("/search", Search).RequireRateLimiting(RateLimits.SearchPolicy);
         books.MapPost("/open-library/{key}", AddFromOpenLibrary).RequireRateLimiting(RateLimits.SearchPolicy);
         books.MapGet("/{id:guid}", GetBook);
+        books.MapPost("/", AddByHand).RequireRateLimiting(RateLimits.SearchPolicy);
         return books;
     }
 
@@ -154,10 +160,63 @@ public static partial class BookEndpoints
         return TypedResults.Created($"/api/books/{book.Id}", BookResponse.From(book));
     }
 
-    private static async Task<Results<Ok<BookResponse>, NotFound>> GetBook(Guid id, TomekeeperDbContext db, CancellationToken cancellationToken)
+    private static async Task<Results<Ok<BookResponse>, NotFound>> GetBook(
+        Guid id, ClaimsPrincipal principal, TomekeeperDbContext db, CancellationToken cancellationToken)
     {
-        var book = await db.Books.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+        var book = await db.Books.AsNoTracking().VisibleTo(principal.GetUserId()).FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
         return book is null ? TypedResults.NotFound() : TypedResults.Ok(BookResponse.From(book));
+    }
+
+    /// <summary>
+    /// Adds a book by hand and puts it on one of the reader's shelves in the same go, since a book of one's own
+    /// that is on no shelf would be lost. Only the reader who added it can see it.
+    /// </summary>
+    private static async Task<Results<Created<ShelfEntryResponse>, ValidationProblem, ProblemHttpResult>> AddByHand(
+        HandBookRequest request, ClaimsPrincipal principal, TomekeeperDbContext db, TimeProvider time, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        now = now.AddTicks(-(now.Ticks % 10)); // PostgreSQL keeps microseconds, so the answer matches the database.
+        var title = request.Title?.Trim() ?? "";
+        var subtitle = string.IsNullOrWhiteSpace(request.Subtitle) ? null : request.Subtitle.Trim();
+        var authors = (request.Authors ?? []).Select(a => a?.Trim() ?? "").Where(a => a.Length > 0).ToList();
+        var latestYear = now.Year + 1;
+
+        var errors = new FieldErrors();
+        if (title.Length == 0) errors.Add("title", "Enter the title.");
+        else if (title.Length > Book.TitleMaxLength) errors.Add("title", $"Keep the title to {Book.TitleMaxLength} characters or fewer.");
+        if (subtitle?.Length > Book.TitleMaxLength) errors.Add("subtitle", $"Keep the subtitle to {Book.TitleMaxLength} characters or fewer.");
+        if (authors.Count > 20 || authors.Any(a => a.Length > 200)) errors.Add("authors", "Enter up to 20 authors, each up to 200 characters.");
+        if (request.FirstPublishedYear is { } year && (year < 1 || year > latestYear))
+        {
+            errors.Add("firstPublishedYear", $"Enter a year from 1 to {latestYear}, or leave it empty.");
+        }
+        if (request.PageCount is < 1 or > ShelfEntry.MaxPageCount) errors.Add("pageCount", ShelfEndpoints.PageCountMessage);
+        var shelf = ShelfNames.FromApiName(request.Shelf);
+        if (shelf is null) errors.Add("shelf", ShelfEndpoints.ChooseShelfMessage);
+        if (errors.Any) return errors.ToProblem();
+
+        var userId = principal.GetUserId();
+        if (await db.ShelfEntries.CountAsync(e => e.UserId == userId, cancellationToken) >= ShelfEntry.MaxPerReader)
+        {
+            return TypedResults.Problem(statusCode: StatusCodes.Status409Conflict, title: "Your shelves are full", detail: ShelfEndpoints.FullMessage);
+        }
+
+        var book = new Book
+        {
+            Id = Guid.CreateVersion7(),
+            Title = title,
+            Subtitle = subtitle,
+            Authors = authors,
+            FirstPublishedYear = request.FirstPublishedYear,
+            PageCount = request.PageCount,
+            AddedById = userId,
+            AddedAt = now,
+            UpdatedAt = now,
+        };
+        var entry = new ShelfEntry { UserId = userId, Book = book, Shelf = shelf!.Value, AddedAt = now, ShelvedAt = now };
+        db.ShelfEntries.Add(entry);
+        await db.SaveChangesAsync(cancellationToken);
+        return TypedResults.Created($"/api/books/{book.Id}", ShelfEntryResponse.From(entry, book));
     }
 
     private static ProblemHttpResult OpenLibraryDown() =>

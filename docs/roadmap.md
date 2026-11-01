@@ -21,7 +21,7 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | 2.1 | Find books: an Open Library client (User-Agent, under 3 calls a second, searches remembered for 10 minutes), the `books` table as Tomekeeper's own catalogue, `GET /api/books/search`, `POST /api/books/open-library/{key}`, `GET /api/books/{id}`, and the Library page with "Find a book" from the 2c design | Done |
 | 2.2 | Shelves: Reading now, Want to read, Finished and Set aside (the `shelf_entries` table, `GET`/`PUT`/`DELETE /api/shelves`); adding a book from the search results (which saves it in the catalogue); "Your shelves" on the Library page, with moving and removing | Done |
 | 2.3 | The book page (`/books/{id}`): details, the reader's shelf, the page count of their own edition (`PUT /api/shelves/{bookId}/page-count`); covers through Tomekeeper's own API (`GET /api/covers/{coverId}`), kept in memory, with the woodcut title page as a stand-in | Done |
-| 2.4 | Adding a book by hand, for books Open Library doesn't have | Next |
+| 2.4 | Adding a book by hand (`/library/add`, `POST /api/books`), for books Open Library doesn't have. Such books are private to the reader who added them and are deleted when removed from the shelves | Done |
 
 ## Later stages
 

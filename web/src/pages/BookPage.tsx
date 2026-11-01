@@ -8,6 +8,7 @@ import { formErrorsFrom, problemMessage } from '../components/forms/formErrors';
 import { TextField } from '../components/forms/TextField';
 import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
+import { Outcome } from '../components/Notice';
 import { ShelfPicker } from '../components/ShelfPicker';
 import { parseWholeNumber } from '../goals/goalText';
 import { usePageTitle } from '../routing/usePageTitle';
@@ -21,7 +22,8 @@ type PageState =
   | { kind: 'loading' }
   | { kind: 'missing' }
   | { kind: 'failed'; message: string }
-  | { kind: 'ready'; book: Book; entry: ShelfEntry | null };
+  | { kind: 'ready'; book: Book; entry: ShelfEntry | null }
+  | { kind: 'deleted'; title: string };
 
 /** A book from the catalogue: its details, and where it is on the reader's shelves. Address: /books/{id}. */
 export function BookPage() {
@@ -59,7 +61,23 @@ export function BookPage() {
         </>
       )}
       {state.kind === 'ready' && (
-        <BookDetails book={state.book} entry={state.entry} onEntry={(entry) => setState({ ...state, entry })} />
+        <BookDetails
+          book={state.book}
+          entry={state.entry}
+          onEntry={(entry) => setState({ ...state, entry })}
+          onDeleted={() => setState({ kind: 'deleted', title: state.book.title })}
+        />
+      )}
+      {state.kind === 'deleted' && (
+        <>
+          <h1 className={styles.title}>Book deleted</h1>
+          <Outcome>
+            <p>
+              <strong>{state.title}</strong> was only on your shelves, so it is gone from Tomekeeper now.
+            </p>
+            <Link to="/library">Go to the Library</Link>
+          </Outcome>
+        </>
       )}
     </Layout>
   );
@@ -69,9 +87,12 @@ interface BookDetailsProps {
   book: Book;
   entry: ShelfEntry | null;
   onEntry: (entry: ShelfEntry | null) => void;
+  /** A book added by hand is deleted when it is removed from the shelves. */
+  onDeleted: () => void;
 }
 
-function BookDetails({ book, entry, onEntry }: BookDetailsProps) {
+function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
+  const byHand = book.openLibraryKey === null;
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | undefined>();
   const [announcement, setAnnouncement] = useState('');
@@ -100,6 +121,10 @@ function BookDetails({ book, entry, onEntry }: BookDetailsProps) {
   const remove = () =>
     change(async () => {
       await shelves.remove(book.id);
+      if (byHand) {
+        onDeleted();
+        return '';
+      }
       onEntry(null);
       // The Remove button is gone, so the focus goes to the line that now says the book is on no shelf.
       requestAnimationFrame(() => document.getElementById('book-shelf')?.focus());
@@ -119,14 +144,14 @@ function BookDetails({ book, entry, onEntry }: BookDetailsProps) {
             <dd>{book.firstPublishedYear ?? 'Not known'}</dd>
             <dt>Pages</dt>
             <dd>{pagesText(book, entry)}</dd>
-            {book.openLibraryKey && (
-              <>
-                <dt>Source</dt>
-                <dd>
-                  <a href={`https://openlibrary.org/works/${book.openLibraryKey}`}>{book.title} on Open Library</a>
-                </dd>
-              </>
-            )}
+            <dt>Source</dt>
+            <dd>
+              {book.openLibraryKey ? (
+                <a href={`https://openlibrary.org/works/${book.openLibraryKey}`}>{book.title} on Open Library</a>
+              ) : (
+                'Added by you, by hand. Only you can see it.'
+              )}
+            </dd>
           </dl>
         </div>
       </div>
@@ -144,7 +169,7 @@ function BookDetails({ book, entry, onEntry }: BookDetailsProps) {
         <ShelfPicker title={book.title} current={entry?.shelf ?? null} busy={busy} error={problem} onChoose={(shelf) => void choose(shelf)}>
           {entry && (
             <Button variant="secondary" aria-disabled={busy || undefined} onClick={() => void remove()}>
-              Remove{' '}
+              {byHand ? 'Delete' : 'Remove'}{' '}
               <span className="visually-hidden">{book.title}</span>
             </Button>
           )}

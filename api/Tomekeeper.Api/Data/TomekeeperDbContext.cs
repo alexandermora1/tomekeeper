@@ -65,6 +65,8 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             book.Property(b => b.Subtitle).HasMaxLength(Book.TitleMaxLength);
             // A PostgreSQL text[] column: author names in order.
             book.Property(b => b.Authors).IsRequired();
+            // A book added by hand goes with the reader who added it.
+            book.HasOne<User>().WithMany().HasForeignKey(b => b.AddedById).OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<ShelfEntry>(entry =>
@@ -78,8 +80,10 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             // One row per reader and book, so a book is on one shelf at a time.
             entry.HasKey(e => new { e.UserId, e.BookId });
             entry.HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-            // The catalogue is shared, so a book that is on someone's shelf can't be deleted from it.
-            entry.HasOne(e => e.Book).WithMany().HasForeignKey(e => e.BookId).OnDelete(DeleteBehavior.Restrict);
+            // The catalogue is shared, so a book that is on someone's shelf can't be deleted from it. NO ACTION
+            // (not RESTRICT) checks at the end of the statement: deleting an account removes the reader's shelf
+            // entries and the books they added by hand together, in either order.
+            entry.HasOne(e => e.Book).WithMany().HasForeignKey(e => e.BookId).OnDelete(DeleteBehavior.NoAction);
             // Stored as the name ("WantToRead"), like portraits.
             entry.Property(e => e.Shelf).HasConversion<string>().HasMaxLength(20);
             // The shelves are listed per reader, latest first.
