@@ -293,6 +293,45 @@ namespace Tomekeeper.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Tomekeeper.Api.Shelves.ShelfEntry", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("BookId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_id");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("added_at");
+
+                    b.Property<string>("Shelf")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("shelf");
+
+                    b.Property<DateTimeOffset>("ShelvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("shelved_at");
+
+                    b.HasKey("UserId", "BookId")
+                        .HasName("pk_shelf_entries");
+
+                    b.HasIndex("BookId")
+                        .HasDatabaseName("ix_shelf_entries_book_id");
+
+                    b.HasIndex("UserId", "ShelvedAt")
+                        .HasDatabaseName("ix_shelf_entries_user_id_shelved_at");
+
+                    b.ToTable("shelf_entries", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_shelf_entries_shelf", "shelf IN ('Reading', 'WantToRead', 'Finished', 'SetAside')");
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.HasOne("Tomekeeper.Api.Accounts.User", null)
@@ -331,6 +370,25 @@ namespace Tomekeeper.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_reading_goals_users_user_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Shelves.ShelfEntry", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Books.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_shelf_entries_books_book_id");
+
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_shelf_entries_users_user_id");
+
+                    b.Navigation("Book");
                 });
 #pragma warning restore 612, 618
         }

@@ -30,6 +30,11 @@ export function formErrorsFrom<Field extends string>(error: unknown, fieldNames:
   return result;
 }
 
+/** One message for an action that isn't a form, such as a button in a list of books. */
+export function problemMessage(error: unknown): string {
+  return formErrorsFrom(error, []).general[0] ?? SERVER_MESSAGE;
+}
+
 function isField<Field extends string>(name: string, fieldNames: readonly Field[]): name is Field {
   return (fieldNames as readonly string[]).includes(name);
 }

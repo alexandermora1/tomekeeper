@@ -1,0 +1,47 @@
+.picker {
+  margin-top: 10px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-family: var(--font-caps);
+  font-size: 1rem; /* 16px */
+  font-weight: 700;
+}
+
+.select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+/* The button while saving, or when the chosen shelf is the one the book is on. Inactive controls
+   don't need to meet the contrast minimum (WCAG 1.4.3), but the text stays readable anyway. */
+.row [aria-disabled='true'] {
+  border-style: dashed;
+  color: var(--muted);
+  cursor: default;
+}
+
+.row [aria-disabled='true']:hover {
+  border-color: var(--ink);
+  color: var(--muted);
+}
+
+.error {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}

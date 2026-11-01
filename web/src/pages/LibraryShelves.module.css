@@ -1,0 +1,40 @@
+.frame {
+  margin-top: 32px;
+}
+
+.quiet {
+  margin: 6px 0 0;
+  font-size: 1rem; /* 16px */
+  color: var(--muted);
+}
+
+.failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.shelf + .shelf {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ink);
+}
+
+.shelfTitle {
+  margin: 0;
+  font-family: var(--font-caps);
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+}
+
+.count {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.more {
+  margin-top: 12px;
+}

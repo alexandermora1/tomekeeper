@@ -4,13 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Goals;
+using Tomekeeper.Api.Shelves;
 
 namespace Tomekeeper.Api.Data;
 
 /// <summary>
 /// The database. Table and column names are snake_case, as is usual in PostgreSQL.
 /// IdentityUserContext gives accounts without roles: users, user_claims, user_logins (Google, from step 1.4)
-/// and user_tokens. Our own tables: reading_goals and books.
+/// and user_tokens. Our own tables: reading_goals, books and shelf_entries.
 /// </summary>
 public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> options)
     : IdentityUserContext<User, Guid>(options)
@@ -18,6 +19,8 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
     public DbSet<ReadingGoal> Goals => Set<ReadingGoal>();
 
     public DbSet<Book> Books => Set<Book>();
+
+    public DbSet<ShelfEntry> ShelfEntries => Set<ShelfEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -62,6 +65,24 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             book.Property(b => b.Subtitle).HasMaxLength(Book.TitleMaxLength);
             // A PostgreSQL text[] column: author names in order.
             book.Property(b => b.Authors).IsRequired();
+        });
+
+        builder.Entity<ShelfEntry>(entry =>
+        {
+            entry.ToTable("shelf_entries", table =>
+            {
+                var names = string.Join(", ", Enum.GetNames<Shelf>().Select(name => $"'{name}'"));
+                table.HasCheckConstraint("ck_shelf_entries_shelf", $"shelf IN ({names})");
+            });
+            // One row per reader and book, so a book is on one shelf at a time.
+            entry.HasKey(e => new { e.UserId, e.BookId });
+            entry.HasOne<User>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            // The catalogue is shared, so a book that is on someone's shelf can't be deleted from it.
+            entry.HasOne(e => e.Book).WithMany().HasForeignKey(e => e.BookId).OnDelete(DeleteBehavior.Restrict);
+            // Stored as the name ("WantToRead"), like portraits.
+            entry.Property(e => e.Shelf).HasConversion<string>().HasMaxLength(20);
+            // The shelves are listed per reader, latest first.
+            entry.HasIndex(e => new { e.UserId, e.ShelvedAt });
         });
     }
 }

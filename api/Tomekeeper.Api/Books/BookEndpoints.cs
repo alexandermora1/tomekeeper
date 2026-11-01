@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using Npgsql;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Data;
 using Tomekeeper.Api.Security;
+using Tomekeeper.Api.Shelves;
 
 namespace Tomekeeper.Api.Books;
 
@@ -23,6 +25,7 @@ public sealed record BookResponse(
 }
 
 /// <param name="BookId">Set when the book is already in Tomekeeper's catalogue.</param>
+/// <param name="Shelf">The reader's shelf for the book ("reading", "wantToRead", "finished" or "setAside"), if it is on one.</param>
 public sealed record BookSearchResult(
     string OpenLibraryKey,
     string Title,
@@ -32,7 +35,8 @@ public sealed record BookSearchResult(
     int? PageCount,
     int? CoverId,
     int? EditionCount,
-    Guid? BookId);
+    Guid? BookId,
+    string? Shelf);
 
 public sealed record BookSearchResponse(string Query, int Total, IReadOnlyList<BookSearchResult> Results);
 
@@ -54,7 +58,7 @@ public static partial class BookEndpoints
     }
 
     private static async Task<Results<Ok<BookSearchResponse>, ValidationProblem, ProblemHttpResult>> Search(
-        string? q, OpenLibraryClient openLibrary, TomekeeperDbContext db, CancellationToken cancellationToken)
+        string? q, ClaimsPrincipal principal, OpenLibraryClient openLibrary, TomekeeperDbContext db, CancellationToken cancellationToken)
     {
         var query = q?.Trim() ?? "";
         if (query.Length < 2) return new FieldErrors().Add("q", "Type a title, an author or an ISBN.").ToProblem();
@@ -76,10 +80,21 @@ public static partial class BookEndpoints
             .Where(b => b.OpenLibraryKey != null && keys.Contains(b.OpenLibraryKey))
             .ToDictionaryAsync(b => b.OpenLibraryKey!, b => b.Id, cancellationToken);
 
+        // And which of those are on this reader's shelves?
+        var userId = principal.GetUserId();
+        var knownIds = known.Values.ToList();
+        var shelved = await db.ShelfEntries.AsNoTracking()
+            .Where(e => e.UserId == userId && knownIds.Contains(e.BookId))
+            .ToDictionaryAsync(e => e.BookId, e => e.Shelf, cancellationToken);
+
         var results = found.Works
-            .Select(w => new BookSearchResult(
-                w.Key, w.Title, w.Subtitle, w.Authors, w.FirstPublishedYear, w.PageCount, w.CoverId, w.EditionCount,
-                known.TryGetValue(w.Key, out var id) ? id : null))
+            .Select(w =>
+            {
+                Guid? bookId = known.TryGetValue(w.Key, out var id) ? id : null;
+                var shelf = bookId is { } b && shelved.TryGetValue(b, out var s) ? s.ToApiName() : null;
+                return new BookSearchResult(
+                    w.Key, w.Title, w.Subtitle, w.Authors, w.FirstPublishedYear, w.PageCount, w.CoverId, w.EditionCount, bookId, shelf);
+            })
             .ToList();
         return TypedResults.Ok(new BookSearchResponse(query, found.Total, results));
     }

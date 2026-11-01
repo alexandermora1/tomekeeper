@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, has begun: readers can search Open Library. Shelves come next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is under way: readers can search Open Library and keep books on four shelves. The book page comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -87,6 +87,20 @@ Settings (in appsettings, or with `dotnet user-secrets` as for Google):
 
 - `OpenLibrary:ContactEmail`: Open Library asks apps for a contact address, and gives identified apps a higher limit. It is added to the `User-Agent` header.
 - `OpenLibrary:BaseUrl`: where Open Library is (`https://openlibrary.org/` by default). Tests and offline work can point it at a stand-in.
+
+### Shelves
+
+Every reader has four shelves: **Reading now**, **Want to read**, **Finished** and **Set aside**. A book is on one of them at a time. Each search result has a shelf list and an **Add** button; the first time anyone shelves a book, it is saved in the catalogue. Below the search, **Your shelves** lists the reader's books, latest first, with the same list to move a book and a **Remove** button. Long shelves show 12 books until the reader asks for all.
+
+The shelf list changes nothing by itself: the reader chooses, then presses the button, so moving through the list with the arrow keys is safe. When a book moves to another shelf, the focus follows it there; when it is removed, the focus goes to the heading of its shelf. Screen readers hear each change ("Dune is on your Finished shelf.").
+
+| Request (under `/api/shelves`) | What it does |
+| --- | --- |
+| `GET /` | Every book on the reader's shelves, latest first |
+| `PUT {bookId}` with `{ "shelf": "wantToRead" }` | Puts a book from the catalogue on a shelf (`reading`, `wantToRead`, `finished` or `setAside`), or moves it there. Sending the same shelf again changes nothing |
+| `DELETE {bookId}` | Takes the book off the reader's shelves. It stays in the catalogue |
+
+The `shelf_entries` table has one row per reader and book, so a book can't be on two shelves. Search results say which shelf each book is on, if any. Shelves belong to the reader alone (profiles come in stage 5), go with the account when it is deleted, and hold at most 10,000 books, so one account can't fill the database.
 
 ## Accounts and security
 

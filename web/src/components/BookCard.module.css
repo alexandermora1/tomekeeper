@@ -1,0 +1,83 @@
+/* A book in a list: the small cover, the title and the details, boxed. Used for search results and shelves. */
+
+.list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+  gap: 14px;
+}
+
+.card {
+  display: flex;
+  gap: 14px;
+  padding: 12px;
+  border: 2px solid var(--ink);
+  background: var(--raised);
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.3125rem; /* 21px */
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 1.0625rem;
+}
+
+.meta {
+  margin: 4px 0 0;
+  font-size: 1rem; /* 16px */
+  color: var(--muted);
+}
+
+/* "On your Want to read shelf" */
+.onShelf {
+  margin: 6px 0 0;
+  font-size: 1rem;
+}
+
+.onShelf::before {
+  content: '❦ ';
+  color: var(--accent);
+}
+
+/* On a narrow phone the text column is too narrow for the shelf list, so the cover keeps the text beside it
+   and the shelf list takes the whole width of the card below. (display: contents lets the parts of the text
+   column sit in the card's grid; it has no meaning for screen readers, so nothing is lost.) */
+@media (max-width: 30rem) {
+  .card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    /* Title, details, then whatever room the cover still needs, so the lines of text stay together. */
+    grid-template-rows: auto auto 1fr;
+    gap: 0 14px;
+    align-items: start;
+  }
+
+  .card > :first-child {
+    grid-row: span 3;
+  }
+
+  .text {
+    display: contents;
+  }
+
+  .text > * {
+    grid-column: 2;
+  }
+
+  .text > .wide {
+    grid-column: 1 / -1;
+  }
+}

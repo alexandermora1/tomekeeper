@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './client';
+import type { ShelfId } from './shelves';
 
 /** A book in Tomekeeper's own catalogue. */
 export interface Book {
@@ -12,7 +13,10 @@ export interface Book {
   coverId: number | null;
 }
 
-/** A book Open Library found. `bookId` is set when it is already in Tomekeeper's catalogue. */
+/**
+ * A book Open Library found. `bookId` is set when it is already in Tomekeeper's catalogue,
+ * and `shelf` when it is on one of the reader's shelves.
+ */
 export interface BookSearchResult {
   openLibraryKey: string;
   title: string;
@@ -23,6 +27,7 @@ export interface BookSearchResult {
   coverId: number | null;
   editionCount: number | null;
   bookId: string | null;
+  shelf: ShelfId | null;
 }
 
 export interface BookSearch {

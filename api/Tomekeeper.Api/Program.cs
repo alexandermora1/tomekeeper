@@ -7,6 +7,7 @@ using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
 using Tomekeeper.Api.Security;
+using Tomekeeper.Api.Shelves;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +138,7 @@ app.MapHealthEndpoints();
 app.MapAccountEndpoints();
 app.MapGoalEndpoints();
 app.MapBookEndpoints();
+app.MapShelfEndpoints();
 
 app.Run();
 
