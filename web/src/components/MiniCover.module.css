@@ -28,3 +28,23 @@
   font-size: 2rem;
   line-height: 1;
 }
+
+/* The book page's size */
+.large {
+  width: 180px;
+  height: 270px;
+  padding: 6px;
+}
+
+.large .page {
+  border-top-width: 18px;
+}
+
+.large .initial {
+  width: 120px;
+  height: 120px;
+}
+
+.large .letter {
+  font-size: 5rem;
+}

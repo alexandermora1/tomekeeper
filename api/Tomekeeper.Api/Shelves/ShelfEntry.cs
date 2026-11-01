@@ -11,6 +11,9 @@ public sealed class ShelfEntry
     /// <summary>A limit on books per reader, so one account can't fill the database.</summary>
     public const int MaxPerReader = 10_000;
 
+    /// <summary>The most pages a reader can give a book.</summary>
+    public const int MaxPageCount = 20_000;
+
     public Guid UserId { get; set; }
 
     public Guid BookId { get; set; }
@@ -24,4 +27,7 @@ public sealed class ShelfEntry
 
     /// <summary>When the book was put on the shelf it is on now. The shelves list the latest first.</summary>
     public DateTimeOffset ShelvedAt { get; set; }
+
+    /// <summary>The page count of the reader's own edition, when they have set one. Otherwise the book's usual count applies.</summary>
+    public int? PageCount { get; set; }
 }

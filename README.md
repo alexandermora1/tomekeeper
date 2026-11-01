@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is under way: readers can search Open Library and keep books on four shelves. The book page comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is under way: readers can search Open Library, keep books on four shelves and open a page for each book. Adding books by hand comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -87,6 +87,11 @@ Settings (in appsettings, or with `dotnet user-secrets` as for Google):
 
 - `OpenLibrary:ContactEmail`: Open Library asks apps for a contact address, and gives identified apps a higher limit. It is added to the `User-Agent` header.
 - `OpenLibrary:BaseUrl`: where Open Library is (`https://openlibrary.org/` by default). Tests and offline work can point it at a stand-in.
+- `OpenLibrary:CoversUrl`: where Open Library keeps cover images (`https://covers.openlibrary.org/` by default).
+
+### Covers
+
+Covers come through Tomekeeper's own API (`GET /api/covers/{coverId}?size=m` or `size=l`), not straight from Open Library, so readers' browsers never contact anyone else and the Content Security Policy stays at `'self'`. The API fetches each cover once and keeps it in memory (up to 64 MB, least used first out); browsers may keep a cover for a year, since a cover id always shows the same picture. Books without a cover, or whose cover doesn't load, get the woodcut title page instead.
 
 ### Shelves
 
@@ -99,6 +104,12 @@ The shelf list changes nothing by itself: the reader chooses, then presses the b
 | `GET /` | Every book on the reader's shelves, latest first |
 | `PUT {bookId}` with `{ "shelf": "wantToRead" }` | Puts a book from the catalogue on a shelf (`reading`, `wantToRead`, `finished` or `setAside`), or moves it there. Sending the same shelf again changes nothing |
 | `DELETE {bookId}` | Takes the book off the reader's shelves. It stays in the catalogue |
+| `GET {bookId}` | One book on the reader's shelves, or 404 |
+| `PUT {bookId}/page-count` with `{ "pageCount": 512 }` | The page count of the reader's own edition (1 to 20,000), or `null` to use the book's usual count |
+
+### The book page
+
+Each book in the catalogue has a page at `/books/{id}`, linked from its title on the shelves and in search results: the large cover, authors, first year, page count and a link to Open Library, then the reader's shelf with the same shelf list, and the page count of their own edition. Progress (stage 3) will count against that page count.
 
 The `shelf_entries` table has one row per reader and book, so a book can't be on two shelves. Search results say which shelf each book is on, if any. Shelves belong to the reader alone (profiles come in stage 5), go with the account when it is deleted, and hold at most 10,000 books, so one account can't fill the database.
 

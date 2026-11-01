@@ -11,8 +11,16 @@ namespace Tomekeeper.Api.Shelves;
 /// <param name="Shelf">"reading", "wantToRead", "finished" or "setAside".</param>
 public sealed record ShelfRequest(string? Shelf);
 
+/// <param name="PageCount">The reader's own page count for the book, or null to use the book's usual one.</param>
+public sealed record PageCountRequest(int? PageCount);
+
 /// <param name="Shelf">"reading", "wantToRead", "finished" or "setAside".</param>
-public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt);
+/// <param name="PageCount">The page count of the reader's own edition, if they have set one.</param>
+public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount)
+{
+    public static ShelfEntryResponse From(ShelfEntry entry, Book book) =>
+        new(BookResponse.From(book), entry.Shelf.ToApiName(), entry.ShelvedAt, entry.PageCount);
+}
 
 /// <param name="Books">Every book on the reader's shelves, the most recently shelved first.</param>
 public sealed record ShelvesResponse(IReadOnlyList<ShelfEntryResponse> Books);
@@ -22,6 +30,8 @@ public static class ShelfEndpoints
 {
     public const string ChooseShelfMessage = "Choose a shelf.";
 
+    public static readonly string PageCountMessage = $"Enter a number of pages from 1 to {ShelfEntry.MaxPageCount:N0}, or leave it empty.";
+
     public static readonly string FullMessage =
         $"You have {ShelfEntry.MaxPerReader:N0} books on your shelves, which is as many as Tomekeeper keeps. Remove some to add more.";
 
@@ -29,6 +39,8 @@ public static class ShelfEndpoints
     {
         var shelves = app.MapGroup("/api/shelves").WithTags("Shelves").RequireAuthorization();
         shelves.MapGet("/", GetShelves);
+        shelves.MapGet("/{bookId:guid}", GetEntry);
+        shelves.MapPut("/{bookId:guid}/page-count", PutPageCount);
         shelves.MapPut("/{bookId:guid}", PutOnShelf);
         shelves.MapDelete("/{bookId:guid}", TakeOff);
         return shelves;
@@ -41,10 +53,37 @@ public static class ShelfEndpoints
         var entries = await db.ShelfEntries.AsNoTracking()
             .Where(e => e.UserId == userId)
             .OrderByDescending(e => e.ShelvedAt)
-            .Select(e => new { e.Book, e.Shelf, e.ShelvedAt })
+            .Include(e => e.Book)
             .ToListAsync(cancellationToken);
-        var books = entries.Select(e => new ShelfEntryResponse(BookResponse.From(e.Book), e.Shelf.ToApiName(), e.ShelvedAt)).ToList();
-        return TypedResults.Ok(new ShelvesResponse(books));
+        return TypedResults.Ok(new ShelvesResponse(entries.Select(e => ShelfEntryResponse.From(e, e.Book)).ToList()));
+    }
+
+    /// <summary>One book on the reader's shelves, for the book page. 404 when it isn't on them.</summary>
+    private static async Task<Results<Ok<ShelfEntryResponse>, NotFound>> GetEntry(
+        Guid bookId, ClaimsPrincipal principal, TomekeeperDbContext db, CancellationToken cancellationToken)
+    {
+        var userId = principal.GetUserId();
+        var entry = await db.ShelfEntries.AsNoTracking().Include(e => e.Book)
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.BookId == bookId, cancellationToken);
+        return entry is null ? TypedResults.NotFound() : TypedResults.Ok(ShelfEntryResponse.From(entry, entry.Book));
+    }
+
+    /// <summary>Sets the page count of the reader's own edition, or clears it with null. Only for books on their shelves.</summary>
+    private static async Task<Results<Ok<ShelfEntryResponse>, ValidationProblem, NotFound>> PutPageCount(
+        Guid bookId, PageCountRequest request, ClaimsPrincipal principal, TomekeeperDbContext db, CancellationToken cancellationToken)
+    {
+        if (request.PageCount is < 1 or > ShelfEntry.MaxPageCount)
+        {
+            return new FieldErrors().Add("pageCount", PageCountMessage).ToProblem();
+        }
+        var userId = principal.GetUserId();
+        var entry = await db.ShelfEntries.Include(e => e.Book)
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.BookId == bookId, cancellationToken);
+        if (entry is null) return TypedResults.NotFound();
+
+        entry.PageCount = request.PageCount;
+        await db.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok(ShelfEntryResponse.From(entry, entry.Book));
     }
 
     /// <summary>
@@ -94,7 +133,7 @@ public static class ShelfEndpoints
             try
             {
                 await db.SaveChangesAsync(cancellationToken);
-                return TypedResults.Ok(new ShelfEntryResponse(BookResponse.From(book), entry.Shelf.ToApiName(), entry.ShelvedAt));
+                return TypedResults.Ok(ShelfEntryResponse.From(entry, book));
             }
             catch (DbUpdateException ex) when (attempt == 1 && ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
             {

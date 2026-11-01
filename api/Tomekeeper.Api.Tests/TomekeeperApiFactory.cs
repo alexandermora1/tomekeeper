@@ -59,6 +59,7 @@ public sealed class TomekeeperApiFactory(
             services.Configure<GoogleOptions>(GoogleDefaults.AuthenticationScheme, options => options.BackchannelHttpHandler = Google);
             // Searches go to the fake Open Library. The throttle in front of it stays, as in the real API.
             services.AddHttpClient<OpenLibraryClient>().ConfigurePrimaryHttpMessageHandler(() => OpenLibrary);
+            services.AddHttpClient<OpenLibraryCoverClient>().ConfigurePrimaryHttpMessageHandler(() => OpenLibrary);
         });
     }
 
@@ -155,6 +156,11 @@ public sealed class FakeOpenLibrary : HttpMessageHandler
 
     public bool Down { get; set; }
 
+    /// <summary>Cover ids the fake has a picture for. Every picture is the same few bytes.</summary>
+    public HashSet<int> Covers { get; } = [9255566, 11481354];
+
+    public static readonly byte[] CoverBytes = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 0xFF, 0xD9];
+
     public static Dictionary<string, object?> Work(string key, string title, string[] authors, int? year, int? pages, int? cover) => new()
     {
         ["key"] = $"/works/{key}",
@@ -170,6 +176,14 @@ public sealed class FakeOpenLibrary : HttpMessageHandler
     {
         Requests.Enqueue(request);
         if (Down) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+        var cover = Regex.Match(request.RequestUri!.AbsolutePath, @"^/b/id/(\d+)-[SML]\.jpg$");
+        if (cover.Success)
+        {
+            if (!Covers.Contains(int.Parse(cover.Groups[1].Value))) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
+            var content = new ByteArrayContent(CoverBytes);
+            content.Headers.ContentType = new("image/jpeg");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+        }
         if (request.RequestUri!.AbsolutePath != "/search.json") return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
 
         var q = QueryHelpers.ParseQuery(request.RequestUri.Query)["q"].ToString();

@@ -259,4 +259,56 @@ public sealed class ShelfTests(PostgresFixture database) : IAsyncLifetime
             """,
             Cancel);
     }
+
+    [Fact]
+    public async Task One_book_on_the_shelves_can_be_fetched_for_the_book_page()
+    {
+        var book = await CatalogueBook("The Single Book");
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/shelves/{book.Id}", Cancel)).StatusCode);
+
+        var entry = await PutOk(book.Id, "reading");
+
+        Assert.Equivalent(entry, await _client.GetFromJsonAsync<ShelfEntryResponse>($"/api/shelves/{book.Id}", Cancel));
+    }
+
+    [Fact]
+    public async Task A_reader_can_set_and_clear_the_page_count_of_their_edition()
+    {
+        var book = await CatalogueBook("The Long Edition");
+        await PutOk(book.Id, "reading");
+
+        var set = await _client.PutAsJsonAsync($"/api/shelves/{book.Id}/page-count", new { pageCount = 512 }, Cancel);
+        Assert.Equal(512, (await set.Content.ReadFromJsonAsync<ShelfEntryResponse>(Cancel))!.PageCount);
+        Assert.Equal(512, Assert.Single(await Shelves()).PageCount);
+        // Moving the book keeps the reader's page count.
+        Assert.Equal(512, (await PutOk(book.Id, "finished")).PageCount);
+
+        var cleared = await _client.PutAsJsonAsync($"/api/shelves/{book.Id}/page-count", new { pageCount = (int?)null }, Cancel);
+        Assert.Null((await cleared.Content.ReadFromJsonAsync<ShelfEntryResponse>(Cancel))!.PageCount);
+        Assert.Equal(320, Assert.Single(await Shelves()).Book.PageCount);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    [InlineData(20_001)]
+    public async Task The_page_count_must_be_sensible(int pageCount)
+    {
+        var book = await CatalogueBook("The Odd Edition");
+        await PutOk(book.Id, "reading");
+
+        var response = await _client.PutAsJsonAsync($"/api/shelves/{book.Id}/page-count", new { pageCount }, Cancel);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(Cancel);
+        Assert.Equal(ShelfEndpoints.PageCountMessage, problem.GetProperty("errors").GetProperty("pageCount")[0].GetString());
+    }
+
+    [Fact]
+    public async Task Only_books_on_the_shelves_get_a_page_count()
+    {
+        var book = await CatalogueBook("The Unshelved Edition");
+        var response = await _client.PutAsJsonAsync($"/api/shelves/{book.Id}/page-count", new { pageCount = 100 }, Cancel);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

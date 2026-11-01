@@ -24,8 +24,9 @@ public static class SecurityHeaders
                 headers["Cross-Origin-Resource-Policy"] = "same-origin";
                 headers["Referrer-Policy"] = "no-referrer";
                 headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
-                // Answers are about one reader; browsers and proxies must not keep copies.
-                if (context.Request.Path.StartsWithSegments("/api")) headers.CacheControl = "no-store";
+                // Answers are about one reader; browsers and proxies must not keep copies. Unless the endpoint
+                // has said otherwise itself, as covers do (the same picture for everyone, kept in the browser).
+                if (context.Request.Path.StartsWithSegments("/api") && string.IsNullOrEmpty(headers.CacheControl)) headers.CacheControl = "no-store";
                 return Task.CompletedTask;
             });
             await next(context);

@@ -37,6 +37,9 @@ export interface BookSearch {
   results: BookSearchResult[];
 }
 
+/** A cover image, through Tomekeeper's API: "m" is about 180 pixels wide, "l" about 500. */
+export const coverUrl = (coverId: number, size: 'm' | 'l') => `/api/covers/${coverId}?size=${size}`;
+
 export const books = {
   search: (query: string) => apiRequest<BookSearch>('GET', `/api/books/search?q=${encodeURIComponent(query)}`),
   /** Saves an Open Library book in the catalogue (or finds it there) and returns it. */

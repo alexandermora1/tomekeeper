@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router';
+import { BookPage } from './pages/BookPage';
 import { ChroniclePage } from './pages/ChroniclePage';
 import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { FirstStepsPage } from './pages/FirstStepsPage';
@@ -47,6 +48,14 @@ export function App() {
             element={
               <RequireReader>
                 <LibraryPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/books/:id"
+            element={
+              <RequireReader>
+                <BookPage />
               </RequireReader>
             }
           />

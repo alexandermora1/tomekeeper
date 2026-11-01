@@ -73,6 +73,7 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             {
                 var names = string.Join(", ", Enum.GetNames<Shelf>().Select(name => $"'{name}'"));
                 table.HasCheckConstraint("ck_shelf_entries_shelf", $"shelf IN ({names})");
+                table.HasCheckConstraint("ck_shelf_entries_page_count", $"page_count IS NULL OR page_count BETWEEN 1 AND {ShelfEntry.MaxPageCount}");
             });
             // One row per reader and book, so a book is on one shelf at a time.
             entry.HasKey(e => new { e.UserId, e.BookId });

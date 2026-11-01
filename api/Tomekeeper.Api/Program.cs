@@ -107,6 +107,16 @@ builder.Services.AddHttpClient<OpenLibraryClient>((services, client) =>
         client.DefaultRequestHeaders.UserAgent.ParseAdd($"Tomekeeper/0.1 ({contact})");
     })
     .AddHttpMessageHandler<OpenLibraryThrottle>();
+// Covers (Books/Covers.cs): fetched once from Open Library, then served from memory.
+builder.Services.AddSingleton<CoverCache>();
+builder.Services.AddHttpClient<OpenLibraryCoverClient>((services, client) =>
+{
+    var options = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenLibraryOptions>>().Value;
+    client.BaseAddress = new Uri(options.CoversUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+    var contact = string.IsNullOrWhiteSpace(options.ContactEmail) ? "+https://github.com/alexandermora1/tomekeeper" : options.ContactEmail.Trim();
+    client.DefaultRequestHeaders.UserAgent.ParseAdd($"Tomekeeper/0.1 ({contact})");
+});
 
 // The clock, as a service so tests could set the time.
 builder.Services.AddSingleton(TimeProvider.System);
@@ -138,6 +148,7 @@ app.MapHealthEndpoints();
 app.MapAccountEndpoints();
 app.MapGoalEndpoints();
 app.MapBookEndpoints();
+app.MapCoverEndpoints();
 app.MapShelfEndpoints();
 
 app.Run();

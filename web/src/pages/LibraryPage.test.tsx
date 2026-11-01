@@ -99,7 +99,7 @@ describe('the Library page', () => {
   describe('shelves', () => {
     const DUNE_ID = '01a1a000-0000-7000-8000-000000000001';
     const duneBook: Book = { ...dune.results[0]!, id: DUNE_ID, openLibraryKey: 'OL893415W' };
-    const entry = (book: Book, shelf: ShelfId): ShelfEntry => ({ book, shelf, shelvedAt: '2026-11-01T12:00:00Z' });
+    const entry = (book: Book, shelf: ShelfId): ShelfEntry => ({ book, shelf, shelvedAt: '2026-11-01T12:00:00Z', pageCount: null });
     const book = (n: number, title = `Book ${n}`): Book => ({
       ...duneBook,
       id: `01a1a000-0000-7000-8000-${String(n).padStart(12, '0')}`,
@@ -131,7 +131,7 @@ describe('the Library page', () => {
 
       expect(await screen.findByRole('heading', { level: 3, name: 'Reading now (1)' })).toBeInTheDocument();
       const reading = within(shelf('Reading now')).getByRole('list', { name: 'Reading now' });
-      expect(within(reading).getByRole('heading', { level: 4, name: 'Dune' })).toBeInTheDocument();
+      expect(within(reading).getByRole('link', { name: 'Dune' })).toHaveAttribute('href', `/books/${DUNE_ID}`);
       expect(reading).toHaveTextContent('Frank Herbert · 1965 · 604 pages');
       const finished = within(shelf('Finished')).getAllByRole('heading', { level: 4 }).map((h) => h.textContent);
       expect(finished).toEqual(['The Hobbit', 'Emma']);

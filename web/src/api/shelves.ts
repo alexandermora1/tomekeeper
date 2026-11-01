@@ -1,5 +1,5 @@
 import type { Book } from './books';
-import { apiRequest } from './client';
+import { ApiError, apiRequest } from './client';
 
 /** The four shelves every reader has. A book is on one of them at a time. */
 export type ShelfId = 'reading' | 'wantToRead' | 'finished' | 'setAside';
@@ -10,6 +10,8 @@ export interface ShelfEntry {
   shelf: ShelfId;
   /** When the book was put on the shelf it is on now. */
   shelvedAt: string;
+  /** The page count of the reader's own edition, if they have set one. */
+  pageCount: number | null;
 }
 
 const path = (bookId: string) => `/api/shelves/${encodeURIComponent(bookId)}`;
@@ -19,6 +21,18 @@ export const shelves = {
   list: async () => (await apiRequest<{ books: ShelfEntry[] }>('GET', '/api/shelves')).books,
   /** Puts a book from the catalogue on a shelf, or moves it there from another one. */
   put: (bookId: string, shelf: ShelfId) => apiRequest<ShelfEntry>('PUT', path(bookId), { shelf }),
+  /** One book on the reader's shelves, or null when it isn't on them. */
+  async get(bookId: string): Promise<ShelfEntry | null> {
+    try {
+      return await apiRequest<ShelfEntry>('GET', path(bookId));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) return null;
+      throw error;
+    }
+  },
+  /** Sets the page count of the reader's own edition; null goes back to the book's usual count. */
+  setPageCount: (bookId: string, pageCount: number | null) =>
+    apiRequest<ShelfEntry>('PUT', `${path(bookId)}/page-count`, { pageCount }),
   /** Takes a book off the reader's shelves. */
   remove: (bookId: string) => apiRequest('DELETE', path(bookId)),
 };

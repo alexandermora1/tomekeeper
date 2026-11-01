@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { books, type BookSearch, type BookSearchResult } from '../api/books';
 import { ApiError } from '../api/client';
 import { shelves, type ShelfEntry, type ShelfId } from '../api/shelves';
 import { bookDetails } from '../books/bookText';
 import cardStyles from '../components/BookCard.module.css';
+import { BookCover } from '../components/BookCover';
 import { Button } from '../components/Button';
 import { OFFLINE_MESSAGE, problemMessage, SERVER_MESSAGE } from '../components/forms/formErrors';
 import { TextField } from '../components/forms/TextField';
 import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
-import { MiniCover } from '../components/MiniCover';
 import { Notice } from '../components/Notice';
 import { ShelfPicker } from '../components/ShelfPicker';
 import { usePageTitle } from '../routing/usePageTitle';
@@ -196,10 +196,11 @@ interface SearchResultProps {
 function SearchResult({ result, shelf, busy, error, onAdd }: SearchResultProps) {
   return (
     <li className={cardStyles.card}>
-      <MiniCover title={result.title} seed={result.openLibraryKey} />
+      <BookCover title={result.title} seed={result.openLibraryKey} coverId={result.coverId} />
       <div className={cardStyles.text}>
         <h3 className={cardStyles.title}>
-          {result.title}
+          {/* Books in the catalogue have a page of their own. */}
+          {result.bookId ? <Link to={`/books/${result.bookId}`}>{result.title}</Link> : result.title}
           {result.subtitle && <span className={cardStyles.subtitle}>: {result.subtitle}</span>}
         </h3>
         <p className={cardStyles.meta}>{bookDetails(result)}</p>

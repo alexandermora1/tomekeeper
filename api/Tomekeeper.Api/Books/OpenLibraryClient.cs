@@ -12,6 +12,9 @@ public sealed class OpenLibraryOptions
 
     public string BaseUrl { get; set; } = "https://openlibrary.org/";
 
+    /// <summary>Where Open Library keeps cover images.</summary>
+    public string CoversUrl { get; set; } = "https://covers.openlibrary.org/";
+
     /// <summary>
     /// Open Library asks apps to say who they are and how to reach them, and gives identified apps a higher limit.
     /// Set your email here (or with dotnet user-secrets) to add it to the User-Agent header.

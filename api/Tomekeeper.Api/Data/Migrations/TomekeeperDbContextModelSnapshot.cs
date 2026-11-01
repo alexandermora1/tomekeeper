@@ -307,6 +307,10 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("added_at");
 
+                    b.Property<int?>("PageCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("page_count");
+
                     b.Property<string>("Shelf")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -328,6 +332,8 @@ namespace Tomekeeper.Api.Data.Migrations
 
                     b.ToTable("shelf_entries", null, t =>
                         {
+                            t.HasCheckConstraint("ck_shelf_entries_page_count", "page_count IS NULL OR page_count BETWEEN 1 AND 20000");
+
                             t.HasCheckConstraint("ck_shelf_entries_shelf", "shelf IN ('Reading', 'WantToRead', 'Finished', 'SetAside')");
                         });
                 });

@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import type { ShelfEntry, ShelfId } from '../api/shelves';
 import { bookDetails } from '../books/bookText';
 import cardStyles from '../components/BookCard.module.css';
+import { BookCover } from '../components/BookCover';
 import { Button } from '../components/Button';
 import formStyles from '../components/forms/forms.module.css';
 import { Frame } from '../components/Frame';
-import { MiniCover } from '../components/MiniCover';
 import { ShelfPicker } from '../components/ShelfPicker';
 import { SHELVES, type ShelfInfo } from '../shelves/shelfText';
 import type { ShelvesState } from '../shelves/useShelves';
@@ -112,13 +113,13 @@ function ShelvedBook({ entry, busy, error, onMove, onRemove }: ShelvedBookProps)
   const { book } = entry;
   return (
     <li className={cardStyles.card}>
-      <MiniCover title={book.title} seed={book.openLibraryKey ?? book.id} />
+      <BookCover title={book.title} seed={book.openLibraryKey ?? book.id} coverId={book.coverId} />
       <div className={cardStyles.text}>
         <h4 id={shelvedBookId(book.id)} tabIndex={-1} className={cardStyles.title}>
-          {book.title}
+          <Link to={`/books/${book.id}`}>{book.title}</Link>
           {book.subtitle && <span className={cardStyles.subtitle}>: {book.subtitle}</span>}
         </h4>
-        <p className={cardStyles.meta}>{bookDetails(book)}</p>
+        <p className={cardStyles.meta}>{bookDetails({ ...book, pageCount: entry.pageCount ?? book.pageCount })}</p>
         <ShelfPicker
           title={book.title}
           current={entry.shelf}
