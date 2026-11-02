@@ -34,7 +34,7 @@ describe('the Library page', () => {
     renderApp('/library');
     expect(await screen.findByRole('heading', { level: 1, name: 'The Library' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
-    expect(document.title).toBe('The Library – Tomekeeper');
+    await vi.waitFor(() => expect(document.title).toBe('The Library – Tomekeeper'));
   });
 
   it('searches Open Library and lists what it found', async () => {

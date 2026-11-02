@@ -152,6 +152,7 @@ app.MapBookEndpoints();
 app.MapCoverEndpoints();
 app.MapShelfEndpoints();
 app.MapProgressEndpoints();
+app.MapChronicleEndpoints();
 
 app.Run();
 

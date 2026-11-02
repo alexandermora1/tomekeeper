@@ -28,8 +28,8 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | Step | What | Status |
 | --- | --- | --- |
 | 3.1 | Logging progress on the book page: the page reached or a percentage, on the reader's own date; finishing (last page, "I've finished it", or moving to Finished); reading again; undoing the last entry. `readings` and `progress_entries` tables, `/api/shelves/{bookId}/progress`. Removing a book with logged pages asks first | Done |
-| 3.2 | The Chronicle dashboard: the Year's Reckoning (pages and books against the goal) and quick logging for the books on Reading now | Next |
-| 3.3 | The Twelve Labours: pages per month, a wheel on wide screens and month boxes on phones | |
+| 3.2 | The Chronicle dashboard: the Year's Reckoning (pages and books against the goal, pages a day to reach it) and quick logging for the books on Reading now. `GET /api/chronicle/{year}` | Done |
+| 3.3 | The Twelve Labours: pages per month, a wheel on wide screens and month boxes on phones | Next |
 
 ## Later stages
 

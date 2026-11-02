@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, has begun: readers log their progress on each book's page. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is under way: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -123,6 +123,12 @@ The book page has **Your reading** for books on the reader's shelves: log the pa
 | `DELETE latest` | Takes back the latest entry |
 
 Tables: `readings` (one time through a book: started and finished dates and the page reached; at most one in progress per book, kept by a partial unique index) and `progress_entries` (date, page reached and pages read). Both go with the book's shelf entry.
+
+### The chronicle
+
+The home page (`/`) shows **The Year's Reckoning**: pages read and books finished this year against the goal, with bars (red for pages, blue for books, as in the 2c design), and how many pages a day from today reach the goal. Whatever the goal doesn't count is still shown ("1 book finished so far."). Below it, **Reading now** lists the books on that shelf with a quick "Page reached" field each; the reckoning updates at once. A book finished from there leaves the list, and the focus goes to the list's heading.
+
+`GET /api/chronicle/{year}` answers with the goal, pages read and books finished in the year (by the reader's own dates), pages per month (for the Twelve Labours in 3.3) and the books on Reading now.
 
 ### Books added by hand
 

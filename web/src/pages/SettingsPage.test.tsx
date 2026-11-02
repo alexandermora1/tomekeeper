@@ -10,7 +10,7 @@ describe('the settings page', () => {
     const details = await screen.findByRole('region', { name: 'Your account' });
     expect(details).toHaveTextContent(sampleReader.displayName);
     expect(details).toHaveTextContent(`${sampleReader.email} (confirmed)`);
-    expect(document.title).toBe('Settings – Tomekeeper');
+    await vi.waitFor(() => expect(document.title).toBe('Settings – Tomekeeper'));
   });
 
   it('is only for signed-in readers', async () => {

@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { fakeApi, sampleReader } from './test/fakeApi';
+import { fakeApi } from './test/fakeApi';
 import { renderApp } from './test/renderApp';
 
 describe('the site shell', () => {
@@ -22,8 +22,8 @@ describe('the site shell', () => {
     fakeApi.signedIn();
     renderApp('/');
     expect(await screen.findByRole('heading', { level: 1, name: 'Your chronicle' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Being built' })).toHaveTextContent(`signed in as ${sampleReader.displayName}`);
-    expect(document.title).toBe('Your chronicle – Tomekeeper');
+    expect(screen.getByRole('region', { name: 'The Year’s Reckoning' })).toBeInTheDocument();
+    await vi.waitFor(() => expect(document.title).toBe('Your chronicle – Tomekeeper'));
   });
 
   it('sends visitors who are not signed in to the sign-in page', async () => {
@@ -61,7 +61,7 @@ describe('the site shell', () => {
     const { user } = renderApp('/sign-in');
     await user.click(await screen.findByRole('link', { name: 'Create an account' }));
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
-    expect(document.title).toBe('Create an account – Tomekeeper');
+    await vi.waitFor(() => expect(document.title).toBe('Create an account – Tomekeeper'));
   });
 });
 

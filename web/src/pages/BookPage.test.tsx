@@ -49,7 +49,7 @@ describe('the book page', () => {
     renderApp(`/books/${ID}`);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Dune' })).toBeInTheDocument();
-    expect(document.title).toBe('Dune – Tomekeeper');
+    await vi.waitFor(() => expect(document.title).toBe('Dune – Tomekeeper'));
     expect(screen.getByText('by Frank Herbert')).toBeInTheDocument();
     expect(screen.getByText('604, a usual count across editions')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Dune on Open Library' })).toHaveAttribute('href', 'https://openlibrary.org/works/OL893415W');

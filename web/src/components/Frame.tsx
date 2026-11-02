@@ -10,12 +10,15 @@ interface FrameProps {
   /** Extra content beside the heading, such as filter buttons. */
   aside?: ReactNode;
   className?: string;
+  /** An id for the heading, so the page can move the focus to it. */
+  headingId?: string;
   children: ReactNode;
 }
 
 /** A panel with a double ink border, corner ornaments and a heading with a leaf. */
-export function Frame({ title, level = 2, top, aside, className, children }: FrameProps) {
-  const headingId = useId();
+export function Frame({ title, level = 2, top, aside, className, headingId: givenId, children }: FrameProps) {
+  const generatedId = useId();
+  const headingId = givenId ?? generatedId;
   const Heading = level === 1 ? 'h1' : level === 2 ? 'h2' : 'h3';
   return (
     <section aria-labelledby={headingId} className={[styles.frame, className].filter(Boolean).join(' ')}>
@@ -24,7 +27,7 @@ export function Frame({ title, level = 2, top, aside, className, children }: Fra
       ))}
       {top}
       <div className={styles.head}>
-        <Heading id={headingId} className={styles.title}>
+        <Heading id={headingId} tabIndex={givenId ? -1 : undefined} className={styles.title}>
           <Leaf />
           {title}
         </Heading>
