@@ -216,7 +216,7 @@ public static partial class BookEndpoints
         var entry = new ShelfEntry { UserId = userId, Book = book, Shelf = shelf!.Value, AddedAt = now, ShelvedAt = now };
         db.ShelfEntries.Add(entry);
         await db.SaveChangesAsync(cancellationToken);
-        return TypedResults.Created($"/api/books/{book.Id}", ShelfEntryResponse.From(entry, book));
+        return TypedResults.Created($"/api/books/{book.Id}", await ShelfEntryResponses.BuildAsync(db, entry, book, cancellationToken));
     }
 
     private static ProblemHttpResult OpenLibraryDown() =>

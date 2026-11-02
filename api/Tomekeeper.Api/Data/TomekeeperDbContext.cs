@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Goals;
+using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Shelves;
 
 namespace Tomekeeper.Api.Data;
@@ -21,6 +22,10 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
     public DbSet<Book> Books => Set<Book>();
 
     public DbSet<ShelfEntry> ShelfEntries => Set<ShelfEntry>();
+
+    public DbSet<Reading> Readings => Set<Reading>();
+
+    public DbSet<ProgressEntry> ProgressEntries => Set<ProgressEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -88,6 +93,29 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             entry.Property(e => e.Shelf).HasConversion<string>().HasMaxLength(20);
             // The shelves are listed per reader, latest first.
             entry.HasIndex(e => new { e.UserId, e.ShelvedAt });
+        });
+
+        builder.Entity<Reading>(reading =>
+        {
+            reading.ToTable("readings", table => table.HasCheckConstraint("ck_readings_page", "page >= 0"));
+            // Readings belong to the book on the reader's shelves: taking it off the shelves deletes them.
+            reading.HasOne<ShelfEntry>().WithMany().HasForeignKey(r => new { r.UserId, r.BookId }).OnDelete(DeleteBehavior.Cascade);
+            // At most one reading of a book in progress per reader.
+            reading.HasIndex(r => new { r.UserId, r.BookId }).IsUnique().HasFilter("finished_on IS NULL").HasDatabaseName("ix_readings_one_in_progress");
+            // Books finished in a year, for the books goal.
+            reading.HasIndex(r => new { r.UserId, r.FinishedOn });
+        });
+
+        builder.Entity<ProgressEntry>(entry =>
+        {
+            entry.ToTable("progress_entries", table =>
+            {
+                table.HasCheckConstraint("ck_progress_entries_page", "page >= 0");
+                table.HasCheckConstraint("ck_progress_entries_pages", "pages >= 0");
+            });
+            entry.HasOne<Reading>().WithMany().HasForeignKey(p => p.ReadingId).OnDelete(DeleteBehavior.Cascade);
+            // Pages read in a year or a month, for the goal and the Twelve Labours.
+            entry.HasIndex(p => new { p.UserId, p.ReadOn });
         });
     }
 }

@@ -14,7 +14,7 @@ const recipes: Book = {
   pageCount: 88,
   coverId: null,
 };
-const entry = { book: recipes, shelf: 'reading', shelvedAt: '2026-11-01T12:00:00Z', pageCount: null };
+const entry = { book: recipes, shelf: 'reading', shelvedAt: '2026-11-01T12:00:00Z', pageCount: null, page: null, pagesRead: 0 };
 
 describe('adding a book by hand', () => {
   beforeEach(() => {

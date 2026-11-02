@@ -9,11 +9,13 @@ import { TextField } from '../components/forms/TextField';
 import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
 import { Outcome } from '../components/Notice';
+import { RemoveButton } from '../components/RemoveButton';
 import { ShelfPicker } from '../components/ShelfPicker';
 import { parseWholeNumber } from '../goals/goalText';
 import { usePageTitle } from '../routing/usePageTitle';
 import { onShelfMessage, shelfName } from '../shelves/shelfText';
 import styles from './BookPage.module.css';
+import { BookProgress } from './BookProgress';
 
 const numberFormat = new Intl.NumberFormat('en-GB');
 const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -93,6 +95,8 @@ interface BookDetailsProps {
 
 function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
   const byHand = book.openLibraryKey === null;
+  // Moving the book can finish a reading, so the progress is fetched again after each move.
+  const [moves, setMoves] = useState(0);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | undefined>();
   const [announcement, setAnnouncement] = useState('');
@@ -115,6 +119,7 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
     change(async () => {
       const saved = await shelves.put(book.id, shelf);
       onEntry(saved);
+      setMoves((n) => n + 1);
       return onShelfMessage(book.title, saved.shelf);
     });
 
@@ -168,10 +173,13 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
         </p>
         <ShelfPicker title={book.title} current={entry?.shelf ?? null} busy={busy} error={problem} onChoose={(shelf) => void choose(shelf)}>
           {entry && (
-            <Button variant="secondary" aria-disabled={busy || undefined} onClick={() => void remove()}>
-              {byHand ? 'Delete' : 'Remove'}{' '}
-              <span className="visually-hidden">{book.title}</span>
-            </Button>
+            <RemoveButton
+              title={book.title}
+              pagesRead={entry.pagesRead}
+              label={byHand ? 'Delete' : 'Remove'}
+              busy={busy}
+              onRemove={() => void remove()}
+            />
           )}
         </ShelfPicker>
         {entry && (
@@ -192,6 +200,7 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
           {announcement}
         </p>
       </Frame>
+      {entry && <BookProgress book={book} entry={entry} onEntry={onEntry} refresh={moves} />}
     </>
   );
 }

@@ -300,6 +300,106 @@ namespace Tomekeeper.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Tomekeeper.Api.Progress.ProgressEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BookId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_id");
+
+                    b.Property<bool>("Finished")
+                        .HasColumnType("boolean")
+                        .HasColumnName("finished");
+
+                    b.Property<DateTimeOffset>("LoggedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("logged_at");
+
+                    b.Property<int>("Page")
+                        .HasColumnType("integer")
+                        .HasColumnName("page");
+
+                    b.Property<int>("Pages")
+                        .HasColumnType("integer")
+                        .HasColumnName("pages");
+
+                    b.Property<DateOnly>("ReadOn")
+                        .HasColumnType("date")
+                        .HasColumnName("read_on");
+
+                    b.Property<Guid>("ReadingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reading_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_progress_entries");
+
+                    b.HasIndex("ReadingId")
+                        .HasDatabaseName("ix_progress_entries_reading_id");
+
+                    b.HasIndex("UserId", "ReadOn")
+                        .HasDatabaseName("ix_progress_entries_user_id_read_on");
+
+                    b.ToTable("progress_entries", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_progress_entries_page", "page >= 0");
+
+                            t.HasCheckConstraint("ck_progress_entries_pages", "pages >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Progress.Reading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BookId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_id");
+
+                    b.Property<DateOnly?>("FinishedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("finished_on");
+
+                    b.Property<int>("Page")
+                        .HasColumnType("integer")
+                        .HasColumnName("page");
+
+                    b.Property<DateOnly>("StartedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("started_on");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_readings");
+
+                    b.HasIndex("UserId", "BookId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_readings_one_in_progress")
+                        .HasFilter("finished_on IS NULL");
+
+                    b.HasIndex("UserId", "FinishedOn")
+                        .HasDatabaseName("ix_readings_user_id_finished_on");
+
+                    b.ToTable("readings", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_readings_page", "page >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Tomekeeper.Api.Shelves.ShelfEntry", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -392,6 +492,26 @@ namespace Tomekeeper.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_reading_goals_users_user_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Progress.ProgressEntry", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Progress.Reading", null)
+                        .WithMany()
+                        .HasForeignKey("ReadingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_progress_entries_readings_reading_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Progress.Reading", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Shelves.ShelfEntry", null)
+                        .WithMany()
+                        .HasForeignKey("UserId", "BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_readings_shelf_entries_user_id_book_id");
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Shelves.ShelfEntry", b =>

@@ -5,21 +5,51 @@ using Npgsql;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Data;
+using Tomekeeper.Api.Progress;
 
 namespace Tomekeeper.Api.Shelves;
 
 /// <param name="Shelf">"reading", "wantToRead", "finished" or "setAside".</param>
-public sealed record ShelfRequest(string? Shelf);
+/// <param name="ReadOn">Today's date where the reader is (yyyy-mm-dd). Moving a book in progress to Finished finishes it on this day.</param>
+public sealed record ShelfRequest(string? Shelf, string? ReadOn = null);
 
 /// <param name="PageCount">The reader's own page count for the book, or null to use the book's usual one.</param>
 public sealed record PageCountRequest(int? PageCount);
 
 /// <param name="Shelf">"reading", "wantToRead", "finished" or "setAside".</param>
 /// <param name="PageCount">The page count of the reader's own edition, if they have set one.</param>
-public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount)
+/// <param name="Page">The page reached in the reading in progress, or null when none is.</param>
+/// <param name="PagesRead">All pages logged for the book, in every reading.</param>
+public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount, int? Page, int PagesRead);
+
+public static class ShelfEntryResponses
 {
-    public static ShelfEntryResponse From(ShelfEntry entry, Book book) =>
-        new(BookResponse.From(book), entry.Shelf.ToApiName(), entry.ShelvedAt, entry.PageCount);
+    /// <summary>Answers for books on one reader's shelves, with their progress: two queries for the whole list.</summary>
+    public static async Task<IReadOnlyList<ShelfEntryResponse>> BuildAsync(
+        TomekeeperDbContext db, Guid userId, IReadOnlyList<(ShelfEntry Entry, Book Book)> entries, CancellationToken cancellationToken)
+    {
+        // For a few books, ask about those; for a whole shelf list, ask about all of the reader's books.
+        var ids = entries.Select(e => e.Entry.BookId).ToList();
+        var few = ids.Count <= 20;
+        var open = await db.Readings.AsNoTracking()
+            .Where(r => r.UserId == userId && r.FinishedOn == null && (!few || ids.Contains(r.BookId)))
+            .ToDictionaryAsync(r => r.BookId, r => r.Page, cancellationToken);
+        var read = await db.ProgressEntries.AsNoTracking()
+            .Where(p => p.UserId == userId && (!few || ids.Contains(p.BookId)))
+            .GroupBy(p => p.BookId)
+            .Select(g => new { BookId = g.Key, Pages = g.Sum(p => p.Pages) })
+            .ToDictionaryAsync(x => x.BookId, x => x.Pages, cancellationToken);
+        return entries
+            .Select(e => new ShelfEntryResponse(
+                BookResponse.From(e.Book), e.Entry.Shelf.ToApiName(), e.Entry.ShelvedAt, e.Entry.PageCount,
+                open.TryGetValue(e.Entry.BookId, out var page) ? page : null,
+                read.GetValueOrDefault(e.Entry.BookId)))
+            .ToList();
+    }
+
+    public static async Task<ShelfEntryResponse> BuildAsync(
+        TomekeeperDbContext db, ShelfEntry entry, Book book, CancellationToken cancellationToken) =>
+        (await BuildAsync(db, entry.UserId, [(entry, book)], cancellationToken))[0];
 }
 
 /// <param name="Books">Every book on the reader's shelves, the most recently shelved first.</param>
@@ -55,7 +85,7 @@ public static class ShelfEndpoints
             .OrderByDescending(e => e.ShelvedAt)
             .Include(e => e.Book)
             .ToListAsync(cancellationToken);
-        return TypedResults.Ok(new ShelvesResponse(entries.Select(e => ShelfEntryResponse.From(e, e.Book)).ToList()));
+        return TypedResults.Ok(new ShelvesResponse(await ShelfEntryResponses.BuildAsync(db, userId, entries.Select(e => (e, e.Book)).ToList(), cancellationToken)));
     }
 
     /// <summary>One book on the reader's shelves, for the book page. 404 when it isn't on them.</summary>
@@ -65,7 +95,7 @@ public static class ShelfEndpoints
         var userId = principal.GetUserId();
         var entry = await db.ShelfEntries.AsNoTracking().Include(e => e.Book)
             .FirstOrDefaultAsync(e => e.UserId == userId && e.BookId == bookId, cancellationToken);
-        return entry is null ? TypedResults.NotFound() : TypedResults.Ok(ShelfEntryResponse.From(entry, entry.Book));
+        return entry is null ? TypedResults.NotFound() : TypedResults.Ok(await ShelfEntryResponses.BuildAsync(db, entry, entry.Book, cancellationToken));
     }
 
     /// <summary>Sets the page count of the reader's own edition, or clears it with null. Only for books on their shelves.</summary>
@@ -83,7 +113,7 @@ public static class ShelfEndpoints
 
         entry.PageCount = request.PageCount;
         await db.SaveChangesAsync(cancellationToken);
-        return TypedResults.Ok(ShelfEntryResponse.From(entry, entry.Book));
+        return TypedResults.Ok(await ShelfEntryResponses.BuildAsync(db, entry, entry.Book, cancellationToken));
     }
 
     /// <summary>
@@ -126,6 +156,13 @@ public static class ShelfEndpoints
             }
             else if (entry.Shelf != shelf)
             {
+                // A book in progress that goes on the Finished shelf is finished: the rest of its pages count today.
+                var reading = shelf == Shelf.Finished ? await ReadingLog.OpenReadingAsync(db, userId, bookId, cancellationToken) : null;
+                if (reading is not null)
+                {
+                    var readOn = ReadingDays.TryRead(request.ReadOn, time, out var day) ? day : DateOnly.FromDateTime(now.UtcDateTime);
+                    ReadingLog.Finish(db, entry, book, reading, readOn, now);
+                }
                 entry.Shelf = shelf;
                 entry.ShelvedAt = now;
             }
@@ -133,7 +170,7 @@ public static class ShelfEndpoints
             try
             {
                 await db.SaveChangesAsync(cancellationToken);
-                return TypedResults.Ok(ShelfEntryResponse.From(entry, book));
+                return TypedResults.Ok(await ShelfEntryResponses.BuildAsync(db, entry, book, cancellationToken));
             }
             catch (DbUpdateException ex) when (attempt == 1 && ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
             {

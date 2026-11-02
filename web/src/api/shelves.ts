@@ -1,3 +1,4 @@
+import { today } from '../dates';
 import type { Book } from './books';
 import { ApiError, apiRequest } from './client';
 
@@ -12,6 +13,10 @@ export interface ShelfEntry {
   shelvedAt: string;
   /** The page count of the reader's own edition, if they have set one. */
   pageCount: number | null;
+  /** The page reached in the reading in progress, or null when none is. */
+  page: number | null;
+  /** All pages logged for the book. Taking it off the shelves deletes them. */
+  pagesRead: number;
 }
 
 const path = (bookId: string) => `/api/shelves/${encodeURIComponent(bookId)}`;
@@ -19,8 +24,11 @@ const path = (bookId: string) => `/api/shelves/${encodeURIComponent(bookId)}`;
 export const shelves = {
   /** Every book on the reader's shelves, the most recently shelved first. */
   list: async () => (await apiRequest<{ books: ShelfEntry[] }>('GET', '/api/shelves')).books,
-  /** Puts a book from the catalogue on a shelf, or moves it there from another one. */
-  put: (bookId: string, shelf: ShelfId) => apiRequest<ShelfEntry>('PUT', path(bookId), { shelf }),
+  /**
+   * Puts a book from the catalogue on a shelf, or moves it there from another one. Moving a book in progress
+   * to Finished finishes it today.
+   */
+  put: (bookId: string, shelf: ShelfId) => apiRequest<ShelfEntry>('PUT', path(bookId), { shelf, readOn: today() }),
   /** One book on the reader's shelves, or null when it isn't on them. */
   async get(bookId: string): Promise<ShelfEntry | null> {
     try {

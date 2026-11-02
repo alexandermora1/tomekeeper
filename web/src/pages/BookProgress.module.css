@@ -1,0 +1,82 @@
+.frame {
+  margin-top: 32px;
+}
+
+.summary {
+  margin: 0;
+  font-size: 1.125rem; /* 18px */
+}
+
+/* How far through the book: red on the page colour, like the progress bars in the 2c design. */
+.bar {
+  height: 12px;
+  margin-top: 10px;
+  border: 2px solid var(--ink);
+  background: var(--page);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--red);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 24px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.row > :first-child {
+  flex: 0 1 280px;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.actions:empty {
+  display: none;
+}
+
+.status {
+  margin: 14px 0 0;
+  font-weight: 700;
+}
+
+.status:empty {
+  margin: 0;
+}
+
+.heading {
+  margin: 24px 0 6px;
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+}
+
+.log {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.pages {
+  color: var(--muted);
+}

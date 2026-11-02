@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, has begun: readers log their progress on each book's page. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -110,6 +110,19 @@ The shelf list changes nothing by itself: the reader chooses, then presses the b
 ### The book page
 
 Each book in the catalogue has a page at `/books/{id}`, linked from its title on the shelves and in search results: the large cover, authors, first year, page count and a link to Open Library, then the reader's shelf with the same shelf list, and the page count of their own edition. Progress (stage 3) will count against that page count.
+
+### Progress
+
+The book page has **Your reading** for books on the reader's shelves: log the page reached, or a percentage for ebooks and audiobooks (turned into a page with the page count). Each entry counts the pages since the one before, on the reader's own date (the browser sends today's date where the reader is, and the API checks that it is today somewhere on Earth), so goals count by the reader's days wherever they live. Logging puts the book on Reading now; the last page, the **I've finished it** button, or moving the book to Finished finishes it, and the rest of its pages count that day. Logging a page in a finished book starts a new reading, so re-reads count too. **Undo the last entry** takes the latest one back. Taking a book off the shelves deletes its progress, so the Remove button asks first when pages are logged.
+
+| Request (under `/api/shelves/{bookId}/progress`) | What it does |
+| --- | --- |
+| `GET /` | The latest reading, its entries, earlier readings, and the book on the shelves |
+| `POST /` with `{ "page": 120, "readOn": "2026-11-02" }` or `{ "percent": 45, … }` | Logs the page reached. It must be later than the last one and within the page count |
+| `POST finish` with `{ "readOn": … }` | Finishes the reading in progress |
+| `DELETE latest` | Takes back the latest entry |
+
+Tables: `readings` (one time through a book: started and finished dates and the page reached; at most one in progress per book, kept by a partial unique index) and `progress_entries` (date, page reached and pages read). Both go with the book's shelf entry.
 
 ### Books added by hand
 

@@ -6,6 +6,7 @@ using Tomekeeper.Api.Data;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
+using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Security;
 using Tomekeeper.Api.Shelves;
 
@@ -150,6 +151,7 @@ app.MapGoalEndpoints();
 app.MapBookEndpoints();
 app.MapCoverEndpoints();
 app.MapShelfEndpoints();
+app.MapProgressEndpoints();
 
 app.Run();
 

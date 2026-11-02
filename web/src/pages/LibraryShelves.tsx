@@ -7,6 +7,7 @@ import { BookCover } from '../components/BookCover';
 import { Button } from '../components/Button';
 import formStyles from '../components/forms/forms.module.css';
 import { Frame } from '../components/Frame';
+import { RemoveButton } from '../components/RemoveButton';
 import { ShelfPicker } from '../components/ShelfPicker';
 import { SHELVES, type ShelfInfo } from '../shelves/shelfText';
 import type { ShelvesState } from '../shelves/useShelves';
@@ -120,6 +121,7 @@ function ShelvedBook({ entry, busy, error, onMove, onRemove }: ShelvedBookProps)
           {book.subtitle && <span className={cardStyles.subtitle}>: {book.subtitle}</span>}
         </h4>
         <p className={cardStyles.meta}>{bookDetails({ ...book, pageCount: entry.pageCount ?? book.pageCount })}</p>
+        {entry.page !== null && <p className={cardStyles.onShelf}>On page {entry.page.toLocaleString('en-GB')}</p>}
         <ShelfPicker
           title={book.title}
           current={entry.shelf}
@@ -128,10 +130,13 @@ function ShelvedBook({ entry, busy, error, onMove, onRemove }: ShelvedBookProps)
           onChoose={onMove}
           className={cardStyles.wide}
         >
-          <Button variant="secondary" aria-disabled={busy || undefined} onClick={onRemove}>
-            Remove{' '}
-            <span className="visually-hidden">{book.title}</span>
-          </Button>
+          <RemoveButton
+            title={book.title}
+            pagesRead={entry.pagesRead}
+            label={book.openLibraryKey ? 'Remove' : 'Delete'}
+            busy={busy}
+            onRemove={onRemove}
+          />
         </ShelfPicker>
       </div>
     </li>

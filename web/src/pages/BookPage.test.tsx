@@ -1,6 +1,8 @@
 import { screen } from '@testing-library/react';
 import type { Book } from '../api/books';
+import type { Progress } from '../api/progress';
 import type { ShelfEntry } from '../api/shelves';
+import { today } from '../dates';
 import { fakeApi, validationProblem } from '../test/fakeApi';
 import { renderApp } from '../test/renderApp';
 
@@ -15,17 +17,32 @@ const dune: Book = {
   pageCount: 604,
   coverId: 11481354,
 };
-const onShelf = (pageCount: number | null = null): ShelfEntry => ({
+const onShelf = (pageCount: number | null = null, page: number | null = null, pagesRead = 0): ShelfEntry => ({
   book: dune,
   shelf: 'reading',
   shelvedAt: '2026-11-01T12:00:00Z',
   pageCount,
+  page,
+  pagesRead,
 });
+const PROGRESS = `/api/shelves/${ID}/progress`;
+const noProgress: Progress = { entry: onShelf(), reading: null, entries: [], earlierReadings: [] };
+/** Progress on page 120, logged in two entries. */
+const onPage120: Progress = {
+  entry: onShelf(null, 120, 120),
+  reading: { id: 'r1', startedOn: '2026-11-01', finishedOn: null, page: 120 },
+  entries: [
+    { id: 'e2', readOn: '2026-11-02', page: 120, pages: 80, finished: false },
+    { id: 'e1', readOn: '2026-11-01', page: 40, pages: 40, finished: false },
+  ],
+  earlierReadings: [],
+};
 
 describe('the book page', () => {
   beforeEach(() => {
     fakeApi.signedIn();
     fakeApi.on('GET', `/api/books/${ID}`, { status: 200, body: dune });
+    fakeApi.on('GET', PROGRESS, { status: 200, body: noProgress });
   });
 
   it("shows the book's details and its cover through Tomekeeper's API", async () => {
@@ -102,5 +119,97 @@ describe('the book page', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Book not found' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to the Library' })).toHaveAttribute('href', '/library');
+  });
+
+  describe('progress', () => {
+    beforeEach(() => {
+      fakeApi.on('GET', `/api/shelves/${ID}`, { status: 200, body: onShelf() });
+    });
+
+    it('logs the page reached and shows how far through the book that is', async () => {
+      fakeApi.on('POST', PROGRESS, { status: 200, body: onPage120 });
+      const { user } = renderApp(`/books/${ID}`);
+
+      expect(await screen.findByText('Log the page you’ve reached, and the pages count towards your goal.')).toBeInTheDocument();
+      await user.type(screen.getByLabelText('Page you’ve reached'), '120');
+      await user.click(screen.getByRole('button', { name: 'Log progress' }));
+
+      expect(await screen.findByText('Logged page 120: 80 pages read.')).toHaveAttribute('role', 'status');
+      expect(fakeApi.sent('POST', PROGRESS)[0]?.body).toEqual({ page: 120, readOn: today() });
+      expect(document.getElementById('progress-summary')).toHaveTextContent('On page 120 of 604 (20%), started 1 November 2026.');
+      expect(screen.getByText('2 November 2026: page 120')).toBeInTheDocument();
+    });
+
+    it('logs a percentage for ebooks and audiobooks', async () => {
+      fakeApi.on('POST', PROGRESS, { status: 200, body: onPage120 });
+      const { user } = renderApp(`/books/${ID}`);
+
+      await user.click(await screen.findByRole('radio', { name: 'Percentage, for ebooks and audiobooks' }));
+      await user.type(screen.getByLabelText('Percentage you’ve reached'), '19,9');
+      await user.click(screen.getByRole('button', { name: 'Log progress' }));
+
+      await screen.findByText('Logged page 120: 80 pages read.');
+      expect(fakeApi.sent('POST', PROGRESS)[0]?.body).toEqual({ percent: 19.9, readOn: today() });
+    });
+
+    it('shows what the API says about a page it cannot use', async () => {
+      fakeApi.on('POST', PROGRESS, { status: 400, body: { title: 'x', status: 400, errors: { page: ['You’re already on page 120.'] } } });
+      const { user } = renderApp(`/books/${ID}`);
+
+      const field = await screen.findByLabelText('Page you’ve reached');
+      await user.type(field, '90');
+      await user.click(screen.getByRole('button', { name: 'Log progress' }));
+
+      await vi.waitFor(() => expect(field).toHaveAccessibleDescription('Error: You’re already on page 120.'));
+    });
+
+    it('finishes the book and moves the focus to the summary', async () => {
+      fakeApi.on('GET', PROGRESS, { status: 200, body: onPage120 });
+      const finished: Progress = {
+        ...onPage120,
+        entry: { ...onShelf(null, null, 604), shelf: 'finished' },
+        reading: { ...onPage120.reading!, finishedOn: '2026-11-02', page: 604 },
+        entries: [{ id: 'e3', readOn: '2026-11-02', page: 604, pages: 484, finished: true }, ...onPage120.entries],
+      };
+      fakeApi.on('POST', `${PROGRESS}/finish`, { status: 200, body: finished });
+      const { user } = renderApp(`/books/${ID}`);
+
+      await user.click(await screen.findByRole('button', { name: 'I’ve finished it' }));
+
+      expect(await screen.findByText('Finished! Dune is on your Finished shelf.')).toBeInTheDocument();
+      expect(document.getElementById('book-shelf')).toHaveTextContent('On your Finished shelf');
+      await vi.waitFor(() => expect(document.getElementById('progress-summary')).toHaveFocus());
+      expect(screen.getByText('2 November 2026: finished')).toBeInTheDocument();
+    });
+
+    it('takes back the last entry', async () => {
+      fakeApi.on('GET', PROGRESS, { status: 200, body: onPage120 });
+      fakeApi.on('DELETE', `${PROGRESS}/latest`, {
+        status: 200,
+        body: { ...onPage120, reading: { ...onPage120.reading!, page: 40 }, entries: onPage120.entries.slice(1) },
+      });
+      const { user } = renderApp(`/books/${ID}`);
+
+      await user.click(await screen.findByRole('button', { name: 'Undo the last entry' }));
+
+      expect(await screen.findByText('The last entry is taken back.')).toBeInTheDocument();
+      expect(document.getElementById('progress-summary')).toHaveTextContent('On page 40 of 604');
+    });
+
+    it('asks before removing a book with logged pages', async () => {
+      fakeApi.on('GET', `/api/shelves/${ID}`, { status: 200, body: onShelf(null, 120, 120) });
+      fakeApi.on('DELETE', `/api/shelves/${ID}`, { status: 204 });
+      const { user } = renderApp(`/books/${ID}`);
+
+      const remove = await screen.findByRole('button', { name: 'Remove Dune' });
+      await user.click(remove);
+
+      expect(fakeApi.sent('DELETE', `/api/shelves/${ID}`)).toHaveLength(0);
+      expect(remove).toHaveAccessibleName('Yes, remove Dune');
+      expect(remove).toHaveFocus();
+      expect(remove).toHaveAccessibleDescription('This also deletes the 120 pages you logged.');
+      await user.click(remove);
+      expect(await screen.findByText('Dune is off your shelves.')).toBeInTheDocument();
+    });
   });
 });

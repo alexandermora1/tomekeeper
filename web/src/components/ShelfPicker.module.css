@@ -45,3 +45,10 @@
   font-weight: 700;
   color: var(--accent);
 }
+
+/* "This also deletes the 312 pages you logged." */
+.warning {
+  flex-basis: 100%;
+  font-weight: 700;
+  color: var(--accent);
+}

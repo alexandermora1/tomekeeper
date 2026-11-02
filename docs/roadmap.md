@@ -23,9 +23,16 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | 2.3 | The book page (`/books/{id}`): details, the reader's shelf, the page count of their own edition (`PUT /api/shelves/{bookId}/page-count`); covers through Tomekeeper's own API (`GET /api/covers/{coverId}`), kept in memory, with the woodcut title page as a stand-in | Done |
 | 2.4 | Adding a book by hand (`/library/add`, `POST /api/books`), for books Open Library doesn't have. Such books are private to the reader who added them and are deleted when removed from the shelves | Done |
 
+## Stage 3: Progress and goals
+
+| Step | What | Status |
+| --- | --- | --- |
+| 3.1 | Logging progress on the book page: the page reached or a percentage, on the reader's own date; finishing (last page, "I've finished it", or moving to Finished); reading again; undoing the last entry. `readings` and `progress_entries` tables, `/api/shelves/{bookId}/progress`. Removing a book with logged pages asks first | Done |
+| 3.2 | The Chronicle dashboard: the Year's Reckoning (pages and books against the goal) and quick logging for the books on Reading now | Next |
+| 3.3 | The Twelve Labours: pages per month, a wheel on wide screens and month boxes on phones | |
+
 ## Later stages
 
-3. **Progress and goals:** log by page or percent, the yearly goal, the Chronicle dashboard and the Twelve Labours (wheel on wide screens, month boxes on phones).
 4. **The game:** XP and levels, quests, attributes, gear, volumes.
 5. **Fellowship:** profiles with "see your profile as", friends, reviews, block and report. Private by default.
 6. **Azure test month and showcase:** infrastructure as code (Bicep), a deploy workflow (with forwarded headers, so Google's redirect address uses https behind Azure), one month on Azure to prove it works end to end, privacy policy and accessibility statement, WCAG audit, README with screenshots, then the deployment comes down again.

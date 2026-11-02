@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import type { Book, BookSearch } from '../api/books';
 import type { ShelfEntry, ShelfId } from '../api/shelves';
+import { today } from '../dates';
 import { fakeApi, problem } from '../test/fakeApi';
 import { renderApp } from '../test/renderApp';
 
@@ -99,7 +100,7 @@ describe('the Library page', () => {
   describe('shelves', () => {
     const DUNE_ID = '01a1a000-0000-7000-8000-000000000001';
     const duneBook: Book = { ...dune.results[0]!, id: DUNE_ID, openLibraryKey: 'OL893415W' };
-    const entry = (book: Book, shelf: ShelfId): ShelfEntry => ({ book, shelf, shelvedAt: '2026-11-01T12:00:00Z', pageCount: null });
+    const entry = (book: Book, shelf: ShelfId): ShelfEntry => ({ book, shelf, shelvedAt: '2026-11-01T12:00:00Z', pageCount: null, page: null, pagesRead: 0 });
     const book = (n: number, title = `Book ${n}`): Book => ({
       ...duneBook,
       id: `01a1a000-0000-7000-8000-${String(n).padStart(12, '0')}`,
@@ -149,7 +150,7 @@ describe('the Library page', () => {
       await user.click(within(result).getByRole('button', { name: 'Add Dune' }));
 
       expect(await screen.findByText('Dune is on your Reading now shelf.')).toHaveAttribute('role', 'status');
-      expect(fakeApi.sent('PUT', `/api/shelves/${DUNE_ID}`)[0]?.body).toEqual({ shelf: 'reading' });
+      expect(fakeApi.sent('PUT', `/api/shelves/${DUNE_ID}`)[0]?.body).toEqual({ shelf: 'reading', readOn: today() });
       expect(result).toHaveTextContent('On your Reading now shelf');
       // The same button now moves the book, and does nothing until another shelf is chosen.
       expect(within(result).getByRole('button', { name: 'Move Dune' })).toHaveAttribute('aria-disabled', 'true');
@@ -166,7 +167,7 @@ describe('the Library page', () => {
 
       expect(await screen.findByText('Dune is on your Want to read shelf.')).toBeInTheDocument();
       expect(fakeApi.sent('POST', '/api/books/open-library/OL893415W')).toHaveLength(0);
-      expect(fakeApi.sent('PUT', `/api/shelves/${DUNE_ID}`)[0]?.body).toEqual({ shelf: 'wantToRead' });
+      expect(fakeApi.sent('PUT', `/api/shelves/${DUNE_ID}`)[0]?.body).toEqual({ shelf: 'wantToRead', readOn: today() });
     });
 
     it('shows which search results are on a shelf already', async () => {

@@ -47,7 +47,7 @@ export function ChroniclePage() {
             )}
             <GoalLine year={year} goal={goal} />
             <p className={styles.note}>
-              Accounts, goals and the Library with your shelves work now. Logging your reading comes next.
+              Accounts, goals and the Library with your shelves work now. Log your reading on each book's page. Your chronicle comes next.
             </p>
           </div>
         </div>
