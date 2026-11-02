@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is under way: profiles and friends are in, reviews come next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -149,6 +149,36 @@ The Quests page shows the portrait with six medallions around it, gold when earn
 ### Attributes and volumes
 
 Four attributes grow for as long as the reader reads, one point per 500 pages of their kind: **Endurance** (pages in books over 600 pages), **Wisdom** (nonfiction pages), **Imagination** (fiction pages) and **Wanderlust** (pages in books by authors new to the reader: none of the book's authors wrote a book they started before). Unlike levels they never start again. Each year is bound as a **volume**: a table on the Quests page with the year in Roman numerals, its pages, books, the level reached and the quests done; the year going on says "so far". On a narrow screen the table scrolls sideways inside its own box, which can take the keyboard focus. `GET /api/legacy` works both out from the reader's progress.
+
+### Profiles
+
+Every reader has a profile at an address of their own, `/readers/{handle}`. The handle is made from the name the first time it is needed ("Åse Ødegård" becomes `ase-odegard`, then `ase-odegard-2` if that is taken) and can be changed on `/profile/edit`, with a short text about the reader of up to 300 characters. Handles are 3 to 30 lowercase letters, digits and hyphens, unique, and a few words such as `admin` and `settings` are kept back.
+
+The name, portrait and text are always shown, so friends can find each other. Each of the other parts can be shown to **Everyone**, **Friends** or **Only you**, and all start as Friends: the year and volumes, Reading now, reviews (stage 5.3) and the fellowship (5.2). On their own profile (`/profile`) readers see a "Visible to" line under each part, set who sees what at the bottom (saved at once) and can use **See your profile as** You, A friend or Someone else to check the result.
+
+| Request | What it does |
+| --- | --- |
+| `GET /api/profile` | The signed-in reader's handle, text and who sees what |
+| `PUT /api/profile` | Changes the handle and the text (`400` with a field error if the handle is taken or not allowed) |
+| `PUT /api/profile/visibility` | Changes who sees one or more parts, such as `{"reading":"everyone"}` |
+| `GET /api/readers/{handle}` | A reader's profile with only the parts this reader may see, how the two stand (`relation`) and the reader's friends if shared; the owner can add `?as=friend` or `?as=stranger` |
+
+### Friends
+
+The Fellowship page (`/fellowship`) finds readers by part of their name or address (at least 2 letters, up to 20 results) and lists the reader's friends, the requests waiting for an answer and the requests they sent. A reader can ask another to be friends from the search results or from that reader's profile; the other can **Accept** or **Ignore**. Ignoring hides the request from the reader who was asked, but the asker isn't told: their request still shows as sent, so asking can't turn into pestering. If both ask each other, they become friends at once. Either friend can end the friendship (the page asks first), and a request can be withdrawn. A reader can have at most 50 requests waiting at a time.
+
+Each friendship is stored twice in the `friendships` table, once from each side, so a reader's friends are a plain lookup; requests are in `friend_requests`. Both go with the account when it is deleted.
+
+| Request | What it does |
+| --- | --- |
+| `GET /api/readers?q=` | Readers whose name contains the words, or whose address contains them in plain letters ("ase" finds Åse), with how the reader stands with each |
+| `GET /api/fellowship` | Friends, requests asking the reader, and requests the reader sent |
+| `POST /api/fellowship/{handle}/ask` | Asks to be friends (or accepts at once, if they asked first) |
+| `POST /api/fellowship/{handle}/accept` | Accepts their request |
+| `POST /api/fellowship/{handle}/ignore` | Hides their request |
+| `DELETE /api/fellowship/{handle}` | Withdraws the reader's request, or ends the friendship |
+
+Each answers with the new relation: `friend`, `asked`, `asksYou` or `none`.
 
 ### Books added by hand
 

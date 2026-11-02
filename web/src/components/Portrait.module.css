@@ -6,6 +6,13 @@
   background: var(--raised);
 }
 
+.tiny {
+  width: 42px;
+  height: 56px;
+  border-radius: 21px 21px 0 0;
+  border-width: 1.5px;
+}
+
 .small {
   width: 84px;
   height: 112px;

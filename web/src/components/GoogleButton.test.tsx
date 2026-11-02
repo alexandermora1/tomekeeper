@@ -48,6 +48,7 @@ describe('coming back from Google', () => {
 
     const summary = await screen.findByRole('group', { name: 'There is a problem' });
     expect(summary).toHaveTextContent(message);
-    expect(summary).toHaveFocus();
+    // The focus moves in an effect after the page has drawn, which can come a moment later on a busy machine.
+    await vi.waitFor(() => expect(summary).toHaveFocus());
   });
 });

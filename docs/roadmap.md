@@ -41,7 +41,17 @@ Confirmed by Alex on 2 November 2026: the titles by level, the six quests with t
 | 4.2 | Quests and gear: the six yearly quests (The Bookbinder, The Scholar, The Long Road, Five Decades, The Chronicler, The Long Nights), gear kept for good in the `gear` table, medallions around the portrait; fiction or nonfiction from Open Library's subjects, the add form and the reader's own say | Done |
 | 4.3 | Attributes (Endurance, Wisdom, Imagination, Wanderlust: a point per 500 pages of each kind, kept across years) and volumes (each year bound when it ends), `GET /api/legacy` | Done |
 
+## Stage 5: Fellowship
+
+Confirmed by Alex on 2 November 2026: reviews with 1 to 5 stars, readers found by profile link and name search, reports stored and emailed to a moderator address, no leaderboard. Private by default.
+
+| Step | What | Status |
+| --- | --- | --- |
+| 5.1 | Profiles: an address of one's own (`/readers/{handle}`, made from the name, changeable), a short text, who sees what (Everyone, Friends, Only you; Friends to begin with) for the year and volumes, Reading now, reviews and the fellowship, and "See your profile as" | Done |
+| 5.2 | Friends: finding readers by name or address, asking to be friends, accepting or ignoring, the Fellowship page; friends see what is shared with friends, and each other's fellowship | Done |
+| 5.3 | Reviews with 1 to 5 stars on book pages and profiles; The Chronicler quest counts them | Next |
+| 5.4 | Blocking (hidden both ways) and reporting (stored, and emailed to a moderator address) | |
+
 ## Later stages
 
-5. **Fellowship:** profiles with "see your profile as", friends, reviews, block and report. Private by default.
 6. **Azure test month and showcase:** infrastructure as code (Bicep), a deploy workflow (with forwarded headers, so Google's redirect address uses https behind Azure), one month on Azure to prove it works end to end, privacy policy and accessibility statement, WCAG audit, README with screenshots, then the deployment comes down again.

@@ -1,0 +1,25 @@
+.actions {
+  margin-top: 8px;
+}
+
+.line {
+  margin: 0;
+  color: var(--muted);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.buttons:empty {
+  display: none;
+}
+
+.error {
+  margin: 8px 0 0;
+  color: var(--accent);
+  font-weight: 700;
+}

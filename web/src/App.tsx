@@ -6,7 +6,10 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { FirstStepsPage } from './pages/FirstStepsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LibraryPage } from './pages/LibraryPage';
+import { EditProfilePage } from './pages/EditProfilePage';
+import { FellowshipPage } from './pages/FellowshipPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { QuestsPage } from './pages/QuestsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignInPage } from './pages/SignInPage';
@@ -66,6 +69,38 @@ export function App() {
             element={
               <RequireReader>
                 <BookPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/fellowship"
+            element={
+              <RequireReader>
+                <FellowshipPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <RequireReader>
+                <ProfilePage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/profile/edit"
+            element={
+              <RequireReader>
+                <EditProfilePage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/readers/:handle"
+            element={
+              <RequireReader>
+                <ProfilePage />
               </RequireReader>
             }
           />

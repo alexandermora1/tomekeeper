@@ -115,6 +115,11 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("access_failed_count");
 
+                    b.Property<string>("Bio")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("bio");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text")
@@ -138,6 +143,19 @@ namespace Tomekeeper.Api.Data.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
+
+                    b.Property<string>("FriendsVisibleTo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("Friends")
+                        .HasColumnName("friends_visible_to");
+
+                    b.Property<string>("Handle")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("handle");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
@@ -174,6 +192,30 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("portrait");
 
+                    b.Property<string>("ProgressVisibleTo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("Friends")
+                        .HasColumnName("progress_visible_to");
+
+                    b.Property<string>("ReadingVisibleTo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("Friends")
+                        .HasColumnName("reading_visible_to");
+
+                    b.Property<string>("ReviewsVisibleTo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("Friends")
+                        .HasColumnName("reviews_visible_to");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text")
                         .HasColumnName("security_stamp");
@@ -189,6 +231,10 @@ namespace Tomekeeper.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_users");
+
+                    b.HasIndex("Handle")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_handle");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("ix_users_normalized_email");
@@ -267,6 +313,62 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasDatabaseName("ix_books_open_library_key");
 
                     b.ToTable("books", (string)null);
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Fellowship.FriendRequest", b =>
+                {
+                    b.Property<Guid>("FromId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("from_id");
+
+                    b.Property<Guid>("ToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("to_id");
+
+                    b.Property<DateTimeOffset?>("IgnoredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ignored_at");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.HasKey("FromId", "ToId")
+                        .HasName("pk_friend_requests");
+
+                    b.HasIndex("ToId")
+                        .HasDatabaseName("ix_friend_requests_to_id");
+
+                    b.ToTable("friend_requests", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_friend_requests_not_self", "from_id <> to_id");
+                        });
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Fellowship.Friendship", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("FriendId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("friend_id");
+
+                    b.Property<DateTimeOffset>("Since")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("since");
+
+                    b.HasKey("UserId", "FriendId")
+                        .HasName("pk_friendships");
+
+                    b.HasIndex("FriendId")
+                        .HasDatabaseName("ix_friendships_friend_id");
+
+                    b.ToTable("friendships", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_friendships_not_self", "user_id <> friend_id");
+                        });
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Game.GearPiece", b =>
@@ -515,6 +617,40 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasForeignKey("AddedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_books_users_added_by_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Fellowship.FriendRequest", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("FromId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friend_requests_users_from_id");
+
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("ToId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friend_requests_users_to_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Fellowship.Friendship", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("FriendId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_friend_id");
+
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_user_id");
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Game.GearPiece", b =>

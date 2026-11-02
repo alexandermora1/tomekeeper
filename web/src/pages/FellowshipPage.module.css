@@ -1,0 +1,71 @@
+.lead {
+  margin: 10px 0 0;
+  font-size: 1.25rem; /* 20px */
+}
+
+.message {
+  margin: 14px 0 0;
+  font-weight: 700;
+}
+
+.message:empty {
+  margin: 0;
+}
+
+.search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.search > :first-child {
+  flex: 0 1 380px;
+  min-width: 0;
+}
+
+.found {
+  margin: 14px 0 0;
+}
+
+.found:empty {
+  margin: 0;
+}
+
+.readers {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.reader + .reader {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--stripe);
+}
+
+.about {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.125rem; /* 18px */
+  overflow-wrap: anywhere;
+}
+
+.name a {
+  font-weight: 700;
+}
+
+.since {
+  color: var(--muted);
+  font-size: 1rem;
+}

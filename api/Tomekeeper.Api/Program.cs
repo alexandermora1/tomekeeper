@@ -7,6 +7,8 @@ using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
+using Tomekeeper.Api.Fellowship;
+using Tomekeeper.Api.Profiles;
 using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Security;
 using Tomekeeper.Api.Shelves;
@@ -157,6 +159,8 @@ app.MapChronicleEndpoints();
 app.MapCharacterEndpoints();
 app.MapQuestEndpoints();
 app.MapLegacyEndpoints();
+app.MapProfileEndpoints();
+app.MapFellowshipEndpoints();
 
 app.Run();
 

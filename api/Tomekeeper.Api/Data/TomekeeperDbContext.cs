@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Books;
+using Tomekeeper.Api.Fellowship;
 using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Progress;
@@ -13,7 +14,7 @@ namespace Tomekeeper.Api.Data;
 /// <summary>
 /// The database. Table and column names are snake_case, as is usual in PostgreSQL.
 /// IdentityUserContext gives accounts without roles: users, user_claims, user_logins (Google, from step 1.4)
-/// and user_tokens. Our own tables: reading_goals, books and shelf_entries.
+/// and user_tokens. Our own tables: reading goals, books, shelves, progress, gear, friend requests and friendships.
 /// </summary>
 public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> options)
     : IdentityUserContext<User, Guid>(options)
@@ -30,6 +31,10 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
 
     public DbSet<GearPiece> Gear => Set<GearPiece>();
 
+    public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
+
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -41,6 +46,15 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             user.Property(u => u.CreatedAt).IsRequired();
             // Stored as the name ("Knight"), so the table is readable and the enum can grow.
             user.Property(u => u.Portrait).HasConversion<string>().HasMaxLength(20);
+            // Lowercase letters, digits and hyphens (checked by the API), unique across readers.
+            user.Property(u => u.Handle).HasMaxLength(Profiles.Handles.MaxLength);
+            user.HasIndex(u => u.Handle).IsUnique();
+            user.Property(u => u.Bio).HasMaxLength(Profiles.ProfileEndpoints.BioMaxLength);
+            // Stored as the name; existing readers get the private default, Friends.
+            foreach (var visibility in new[] { nameof(User.ProgressVisibleTo), nameof(User.ReadingVisibleTo), nameof(User.ReviewsVisibleTo), nameof(User.FriendsVisibleTo) })
+            {
+                user.Property<Profiles.Visibility>(visibility).HasConversion<string>().HasMaxLength(10).HasDefaultValue(Profiles.Visibility.Friends);
+            }
             // Identity names these two indexes itself; give them the same style as the rest.
             // User names are email addresses here, so the unique user name index also keeps emails unique.
             user.HasIndex(u => u.NormalizedEmail).HasDatabaseName("ix_users_normalized_email");
@@ -128,6 +142,27 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             gear.HasKey(g => new { g.UserId, g.Item });
             gear.Property(g => g.Item).HasMaxLength(20);
             gear.HasOne<User>().WithMany().HasForeignKey(g => g.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<FriendRequest>(request =>
+        {
+            request.ToTable("friend_requests", table => table.HasCheckConstraint("ck_friend_requests_not_self", "from_id <> to_id"));
+            // One open request from a reader to another.
+            request.HasKey(r => new { r.FromId, r.ToId });
+            request.HasOne<User>().WithMany().HasForeignKey(r => r.FromId).OnDelete(DeleteBehavior.Cascade);
+            request.HasOne<User>().WithMany().HasForeignKey(r => r.ToId).OnDelete(DeleteBehavior.Cascade);
+            // The requests a reader has been sent.
+            request.HasIndex(r => r.ToId);
+        });
+
+        builder.Entity<Friendship>(friendship =>
+        {
+            // Stored once from each side.
+            friendship.ToTable("friendships", table => table.HasCheckConstraint("ck_friendships_not_self", "user_id <> friend_id"));
+            friendship.HasKey(f => new { f.UserId, f.FriendId });
+            friendship.HasOne<User>().WithMany().HasForeignKey(f => f.UserId).OnDelete(DeleteBehavior.Cascade);
+            friendship.HasOne<User>().WithMany().HasForeignKey(f => f.FriendId).OnDelete(DeleteBehavior.Cascade);
+            friendship.HasIndex(f => f.FriendId);
         });
     }
 }
