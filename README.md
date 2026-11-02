@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is under way: profiles and friends are in, reviews come next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is under way: profiles, friends and reviews are in; blocking and reporting come next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -140,7 +140,7 @@ The Quests page (`/quests`) shows "Alex the Wayfarer", the year as a volume in R
 
 ### Quests and gear
 
-Each year has six quests, one for each piece of gear: **The Bookbinder** (finish ten books: Bookbinder’s Gloves, hands), **The Scholar** (2,000 pages of nonfiction: Scholar’s Spectacles, head), **The Long Road** (finish a book over 1,000 pages: Pilgrim’s Satchel), **Five Decades** (finish books first published in five different decades: Wayfarer’s Cloak), **The Chronicler** (write five reviews: Chronicler’s Quill; it opens when reviews come in stage 5) and **The Long Nights** (1,500 pages in December: Lantern of Long Nights; it opens on 1 December). `GET /api/quests/{year}` works them out from the reader's progress. When a quest is done, its gear is recorded in the `gear` table and kept for good, even if the progress is changed later. Gear is only for show.
+Each year has six quests, one for each piece of gear: **The Bookbinder** (finish ten books: Bookbinder’s Gloves, hands), **The Scholar** (2,000 pages of nonfiction: Scholar’s Spectacles, head), **The Long Road** (finish a book over 1,000 pages: Pilgrim’s Satchel), **Five Decades** (finish books first published in five different decades: Wayfarer’s Cloak), **The Chronicler** (write five reviews with words in the year: Chronicler’s Quill) and **The Long Nights** (1,500 pages in December: Lantern of Long Nights; it opens on 1 December). `GET /api/quests/{year}` works them out from the reader's progress. When a quest is done, its gear is recorded in the `gear` table and kept for good, even if the progress is changed later. Gear is only for show.
 
 The Quests page shows the portrait with six medallions around it, gold when earned; each is a button (`aria-pressed`) that tells where its piece comes from. Below, the quests of the year can be filtered: All, Under way, Complete, Coming.
 
@@ -179,6 +179,18 @@ Each friendship is stored twice in the `friendships` table, once from each side,
 | `DELETE /api/fellowship/{handle}` | Withdraws the reader's request, or ends the friendship |
 
 Each answers with the new relation: `friend`, `asked`, `asksYou` or `none`.
+
+### Reviews
+
+Readers can review any book on their shelves with 1 to 5 stars and, if they like, up to 5,000 characters of words, in the **Reviews** frame on the book page. The stars are radio buttons, so they work with the arrow keys, and the choice is also written out ("4 of 5"). Each reader has one review per book; editing keeps the first date and adds "edited". Taking the book off the shelves deletes the review, so the Remove button asks first when there is one.
+
+The book page also shows other readers' reviews that this reader may see: those shared with everyone, and those shared with friends when the two are friends (the "Reviews" setting on the profile; Friends to begin with). A reader's latest ten reviews are on their profile under the same rule. Only reviews with words count for The Chronicler.
+
+| Request (under `/api/books/{bookId}`) | What it does |
+| --- | --- |
+| `GET /reviews` | The reader's own review (`mine`) and the others they may see, newest first |
+| `PUT /review` | Writes or changes the reader's review: `rating` 1 to 5 and `text` (409 if the book isn't on their shelves) |
+| `DELETE /review` | Deletes it |
 
 ### Books added by hand
 

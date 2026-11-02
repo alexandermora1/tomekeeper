@@ -1,5 +1,6 @@
 import type { PortraitId } from './account';
 import type { ReaderCard, Relation } from './fellowship';
+import type { ProfileReview } from './reviews';
 import type { Volume } from './legacy';
 import { apiRequest } from './client';
 
@@ -43,6 +44,8 @@ export interface ReaderProfile {
   relation: Exclude<Relation, 'you'> | null;
   /** The reader's friends, when you may see them. */
   fellowship: ReaderCard[] | null;
+  /** The reader's latest reviews, when you may see them. */
+  reviews: ProfileReview[] | null;
 }
 
 export const profile = {

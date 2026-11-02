@@ -16,6 +16,7 @@ const dune: ShelfEntry = {
   page: 120,
   pagesRead: 120,
   fiction: null,
+  reviewed: false,
 };
 const year = (changes: Partial<Chronicle> = {}): Chronicle => ({
   year: YEAR,

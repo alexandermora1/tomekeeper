@@ -9,6 +9,7 @@ using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
 using Tomekeeper.Api.Fellowship;
 using Tomekeeper.Api.Profiles;
+using Tomekeeper.Api.Reviews;
 using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Security;
 using Tomekeeper.Api.Shelves;
@@ -161,6 +162,7 @@ app.MapQuestEndpoints();
 app.MapLegacyEndpoints();
 app.MapProfileEndpoints();
 app.MapFellowshipEndpoints();
+app.MapReviewEndpoints();
 
 app.Run();
 

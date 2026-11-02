@@ -21,7 +21,8 @@ public sealed record PageCountRequest(int? PageCount);
 /// <param name="Page">The page reached in the reading in progress, or null when none is.</param>
 /// <param name="PagesRead">All pages logged for the book, in every reading.</param>
 /// <param name="Fiction">The reader's own say on fiction or nonfiction, if they gave one (the book's guess is in Book).</param>
-public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount, int? Page, int PagesRead, bool? Fiction);
+/// <param name="Reviewed">True when the reader has reviewed the book; removing it from the shelves deletes the review.</param>
+public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount, int? Page, int PagesRead, bool? Fiction, bool Reviewed);
 
 /// <param name="Fiction">True for fiction, false for nonfiction, null to go back to Tomekeeper's guess.</param>
 public sealed record KindRequest(bool? Fiction);
@@ -43,12 +44,17 @@ public static class ShelfEntryResponses
             .GroupBy(p => p.BookId)
             .Select(g => new { BookId = g.Key, Pages = g.Sum(p => p.Pages) })
             .ToDictionaryAsync(x => x.BookId, x => x.Pages, cancellationToken);
+        var reviewed = (await db.Reviews.AsNoTracking()
+            .Where(r => r.UserId == userId && (!few || ids.Contains(r.BookId)))
+            .Select(r => r.BookId)
+            .ToListAsync(cancellationToken)).ToHashSet();
         return entries
             .Select(e => new ShelfEntryResponse(
                 BookResponse.From(e.Book), e.Entry.Shelf.ToApiName(), e.Entry.ShelvedAt, e.Entry.PageCount,
                 open.TryGetValue(e.Entry.BookId, out var page) ? page : null,
                 read.GetValueOrDefault(e.Entry.BookId),
-                e.Entry.Fiction))
+                e.Entry.Fiction,
+                reviewed.Contains(e.Entry.BookId)))
             .ToList();
     }
 

@@ -133,6 +133,7 @@ function ShelvedBook({ entry, busy, error, onMove, onRemove }: ShelvedBookProps)
           <RemoveButton
             title={book.title}
             pagesRead={entry.pagesRead}
+            reviewed={entry.reviewed}
             label={book.openLibraryKey ? 'Remove' : 'Delete'}
             busy={busy}
             onRemove={onRemove}

@@ -100,7 +100,7 @@ describe('the Library page', () => {
   describe('shelves', () => {
     const DUNE_ID = '01a1a000-0000-7000-8000-000000000001';
     const duneBook: Book = { ...dune.results[0]!, id: DUNE_ID, openLibraryKey: 'OL893415W', fiction: true };
-    const entry = (book: Book, shelf: ShelfId): ShelfEntry => ({ book, shelf, shelvedAt: '2026-11-01T12:00:00Z', pageCount: null, page: null, pagesRead: 0, fiction: null });
+    const entry = (book: Book, shelf: ShelfId): ShelfEntry => ({ book, shelf, shelvedAt: '2026-11-01T12:00:00Z', pageCount: null, page: null, pagesRead: 0, fiction: null, reviewed: false });
     const book = (n: number, title = `Book ${n}`): Book => ({
       ...duneBook,
       id: `01a1a000-0000-7000-8000-${String(n).padStart(12, '0')}`,

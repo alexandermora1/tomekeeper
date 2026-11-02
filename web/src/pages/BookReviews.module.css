@@ -1,0 +1,123 @@
+.subheading {
+  margin: 4px 0 0;
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+}
+
+.subheading ~ .subheading {
+  margin-top: 32px;
+}
+
+.quiet {
+  color: var(--muted);
+}
+
+.form {
+  max-width: 640px;
+  margin-top: 12px;
+}
+
+.stars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.star:has(input:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.on {
+  color: var(--accent);
+}
+
+.off {
+  color: var(--ink);
+}
+
+.chosen {
+  margin-left: 10px;
+  font-weight: 700;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mine {
+  margin-top: 12px;
+}
+
+.warning {
+  margin: 10px 0 0;
+  font-weight: 700;
+}
+
+.warning:empty {
+  margin: 0;
+}
+
+.list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.review + .review {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--stripe);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.by {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.by a {
+  font-weight: 700;
+}
+
+.meta {
+  margin: 4px 0 0;
+}
+
+.text {
+  max-width: 68ch;
+  margin: 8px 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

@@ -180,7 +180,7 @@ public static class FellowshipEndpoints
     }
 
     /// <summary>The users must be tracked, so readers without an address yet can be given one.</summary>
-    private static async Task<IReadOnlyList<ReaderCard>> CardsAsync(
+    public static async Task<IReadOnlyList<ReaderCard>> CardsAsync(
         TomekeeperDbContext db, Guid viewerId, IEnumerable<(User User, DateTimeOffset? Since)> readers, CancellationToken cancellationToken)
     {
         var list = readers.ToList();

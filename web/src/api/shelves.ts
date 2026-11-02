@@ -19,6 +19,8 @@ export interface ShelfEntry {
   pagesRead: number;
   /** The reader's own say on fiction or nonfiction, if they gave one; otherwise the book's guess applies. */
   fiction: boolean | null;
+  /** True when you have reviewed the book. Taking it off the shelves deletes the review. */
+  reviewed: boolean;
 }
 
 const path = (bookId: string) => `/api/shelves/${encodeURIComponent(bookId)}`;

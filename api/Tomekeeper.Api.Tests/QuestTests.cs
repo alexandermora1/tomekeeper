@@ -53,7 +53,7 @@ public sealed class QuestTests(PostgresFixture database) : IAsyncLifetime
 
         Assert.Equal(["binder", "scholar", "road", "decades", "quill", "nights"], quests.Quests.Select(q => q.Id));
         Assert.All(quests.Quests, q => Assert.NotEqual("done", q.State));
-        Assert.Equal("soon", Quest(quests, "quill").State);
+        Assert.Equal(("active", "0 of 5 reviews. Stars alone don’t count; write a few words."), (Quest(quests, "quill").State, Quest(quests, "quill").Progress));
         Assert.Equal(Today.Month == 12 ? "active" : "soon", Quest(quests, "nights").State);
         Assert.Equal(["spectacles", "cloak", "gloves", "satchel", "lantern", "quill"], quests.Gear.Select(g => g.Item));
         Assert.All(quests.Gear, g => Assert.Null(g.EarnedIn));

@@ -93,13 +93,14 @@ public sealed class ProfileTests(PostgresFixture database) : IAsyncLifetime
         Assert.Null(seen.Visibility);
         Assert.True(seen.SomethingHidden);
 
-        (await _client.PutAsJsonAsync("/api/profile/visibility", new { progress = "everyone", reading = "everyone", friends = "everyone" }, Cancel)).EnsureSuccessStatusCode();
+        (await _client.PutAsJsonAsync("/api/profile/visibility", new { progress = "everyone", reading = "everyone", friends = "everyone", reviews = "everyone" }, Cancel)).EnsureSuccessStatusCode();
         var shared = await other.GetFromJsonAsync<ReaderProfileResponse>($"/api/readers/{handle}", Cancel);
 
         Assert.NotNull(shared!.Year);
         Assert.NotNull(shared.Volumes);
         Assert.Empty(shared.ReadingNow!);
         Assert.Empty(shared.Fellowship!);
+        Assert.Empty(shared.Reviews!);
         Assert.Equal("none", shared.Relation);
         Assert.False(shared.SomethingHidden);
     }

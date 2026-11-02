@@ -1,0 +1,11 @@
+.stars {
+  color: var(--accent);
+  font-family: Georgia, serif;
+  font-size: 1.125rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.hollow {
+  color: var(--muted);
+}

@@ -531,6 +531,48 @@ namespace Tomekeeper.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Tomekeeper.Api.Reviews.Review", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("BookId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_id");
+
+                    b.Property<DateTimeOffset?>("EditedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("edited_at");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)")
+                        .HasColumnName("text");
+
+                    b.Property<DateTimeOffset>("WrittenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("written_at");
+
+                    b.HasKey("UserId", "BookId")
+                        .HasName("pk_reviews");
+
+                    b.HasIndex("BookId", "WrittenAt")
+                        .HasDatabaseName("ix_reviews_book_id_written_at");
+
+                    b.HasIndex("UserId", "WrittenAt")
+                        .HasDatabaseName("ix_reviews_user_id_written_at");
+
+                    b.ToTable("reviews", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reviews_rating", "rating BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("Tomekeeper.Api.Shelves.ShelfEntry", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -691,6 +733,16 @@ namespace Tomekeeper.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_readings_shelf_entries_user_id_book_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Reviews.Review", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Shelves.ShelfEntry", null)
+                        .WithMany()
+                        .HasForeignKey("UserId", "BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reviews_shelf_entries_user_id_book_id");
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Shelves.ShelfEntry", b =>

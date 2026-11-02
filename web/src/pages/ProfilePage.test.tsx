@@ -25,6 +25,7 @@ const own: ReaderProfile = {
   somethingHidden: false,
   visibility,
   relation: null,
+  reviews: [{ bookId: '01a18876-0000-7000-8000-000000000002', title: 'Deadhouse Gates', authors: ['Steven Erikson'], rating: 5, text: 'Worth every page.', writtenAt: '2026-10-20T10:00:00Z' }],
   fellowship: [{ handle: 'tormod', displayName: 'Tormod', portrait: null, relation: 'friend', since: '2026-10-01T10:00:00Z' }],
 };
 
@@ -37,6 +38,7 @@ const asStranger: ReaderProfile = {
   somethingHidden: true,
   visibility: null,
   fellowship: null,
+  reviews: null,
 };
 
 describe('the profile page', () => {
@@ -117,6 +119,16 @@ describe('the profile page', () => {
 
     expect(await screen.findByText(/^Not saved: /)).toBeInTheDocument();
     expect(within(group).getByRole('radio', { name: 'Friends' })).toBeChecked();
+  });
+
+  it('shows your latest reviews', async () => {
+    renderApp('/profile');
+
+    const reviews = await screen.findByRole('region', { name: 'Reviews' });
+    expect(within(reviews).getByRole('link', { name: 'Deadhouse Gates' })).toHaveAttribute('href', '/books/01a18876-0000-7000-8000-000000000002');
+    expect(within(reviews).getByRole('img', { name: '5 of 5 stars' })).toBeInTheDocument();
+    expect(reviews).toHaveTextContent('Worth every page.');
+    expect(reviews).toHaveTextContent('Visible to: Friends');
   });
 
   it('lists your friends', async () => {

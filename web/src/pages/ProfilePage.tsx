@@ -9,6 +9,7 @@ import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
 import { Notice } from '../components/Notice';
 import { Portrait } from '../components/Portrait';
+import { Stars } from '../components/Stars';
 import { RelationActions } from '../fellowship/RelationActions';
 import { toRoman } from '../game/roman';
 import { usePageTitle } from '../routing/usePageTitle';
@@ -16,6 +17,7 @@ import chronicleStyles from './ChroniclePage.module.css';
 import styles from './ProfilePage.module.css';
 
 const numberFormat = new Intl.NumberFormat('en-GB');
+const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 const VIEWERS: [ViewedAs, string][] = [
   ['you', 'You'],
@@ -224,6 +226,30 @@ function ProfileView({ data, onSettings, onRelation }: ProfileViewProps) {
             ))}
           </ul>
           {badge('progress')}
+        </Frame>
+      )}
+
+      {data.reviews && (
+        <Frame title="Reviews" className={chronicleStyles.frame}>
+          {data.reviews.length === 0 ? (
+            <p className={chronicleStyles.note}>No reviews yet.</p>
+          ) : (
+            <ul className={styles.reviews}>
+              {data.reviews.map((review, index) => (
+                <li key={review.bookId ?? index}>
+                  <p className={styles.reviewOf}>
+                    <strong>{review.bookId ? <Link to={`/books/${review.bookId}`}>{review.title}</Link> : review.title}</strong>
+                    <span className={styles.muted}> · {review.authors.join(', ') || 'Unknown author'}</span>
+                  </p>
+                  <p className={styles.reviewMeta}>
+                    <Stars rating={review.rating} /> <span className={styles.muted}>{dateFormat.format(new Date(review.writtenAt))}</span>
+                  </p>
+                  {review.text && <p className={styles.reviewText}>{review.text}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {badge('reviews')}
         </Frame>
       )}
 

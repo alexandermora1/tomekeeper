@@ -7,6 +7,7 @@ using Tomekeeper.Api.Fellowship;
 using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Progress;
+using Tomekeeper.Api.Reviews;
 using Tomekeeper.Api.Shelves;
 
 namespace Tomekeeper.Api.Data;
@@ -14,7 +15,7 @@ namespace Tomekeeper.Api.Data;
 /// <summary>
 /// The database. Table and column names are snake_case, as is usual in PostgreSQL.
 /// IdentityUserContext gives accounts without roles: users, user_claims, user_logins (Google, from step 1.4)
-/// and user_tokens. Our own tables: reading goals, books, shelves, progress, gear, friend requests and friendships.
+/// and user_tokens. Our own tables: reading goals, books, shelves, progress, gear, friend requests, friendships and reviews.
 /// </summary>
 public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> options)
     : IdentityUserContext<User, Guid>(options)
@@ -34,6 +35,8 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
 
     public DbSet<Friendship> Friendships => Set<Friendship>();
+
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -163,6 +166,19 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             friendship.HasOne<User>().WithMany().HasForeignKey(f => f.UserId).OnDelete(DeleteBehavior.Cascade);
             friendship.HasOne<User>().WithMany().HasForeignKey(f => f.FriendId).OnDelete(DeleteBehavior.Cascade);
             friendship.HasIndex(f => f.FriendId);
+        });
+
+        builder.Entity<Review>(review =>
+        {
+            review.ToTable("reviews", table => table.HasCheckConstraint("ck_reviews_rating", "rating BETWEEN 1 AND 5"));
+            // One review per reader and book.
+            review.HasKey(r => new { r.UserId, r.BookId });
+            review.Property(r => r.Text).HasMaxLength(Review.MaxTextLength);
+            // A review belongs to the book on the reader's shelves: taking it off the shelves deletes the review.
+            review.HasOne<ShelfEntry>().WithMany().HasForeignKey(r => new { r.UserId, r.BookId }).OnDelete(DeleteBehavior.Cascade);
+            // Reviews of a book, newest first; a reader's reviews for their profile and The Chronicler.
+            review.HasIndex(r => new { r.BookId, r.WrittenAt });
+            review.HasIndex(r => new { r.UserId, r.WrittenAt });
         });
     }
 }

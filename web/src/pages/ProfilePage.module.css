@@ -95,6 +95,34 @@
   color: var(--muted);
 }
 
+.reviews {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviews li + li {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--stripe);
+}
+
+.reviewOf,
+.reviewMeta {
+  margin: 0;
+}
+
+.reviewMeta {
+  margin-top: 4px;
+}
+
+.reviewText {
+  max-width: 68ch;
+  margin: 8px 0 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .friends {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));

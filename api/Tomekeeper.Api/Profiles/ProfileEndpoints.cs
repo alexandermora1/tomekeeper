@@ -5,13 +5,14 @@ using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Data;
 using Tomekeeper.Api.Fellowship;
 using Tomekeeper.Api.Game;
+using Tomekeeper.Api.Reviews;
 using Tomekeeper.Api.Shelves;
 
 namespace Tomekeeper.Api.Profiles;
 
 /// <param name="Progress">Year and volumes: pages, goal, level and past years.</param>
 /// <param name="Reading">The books on Reading now.</param>
-/// <param name="Reviews">Reviews the reader writes (stage 5.3).</param>
+/// <param name="Reviews">Reviews the reader writes.</param>
 /// <param name="Friends">Who the reader's friends are.</param>
 public sealed record VisibilitySettings(string Progress, string Reading, string Reviews, string Friends)
 {
@@ -38,6 +39,7 @@ public sealed record ReadingNowItem(Guid? BookId, string Title, IReadOnlyList<st
 /// <param name="Visibility">The settings, for the owner only.</param>
 /// <param name="Relation">How the viewer stands with the reader ("friend", "asked", "asksYou" or "none"); null for the owner.</param>
 /// <param name="Fellowship">The reader's friends, when this viewer may see them.</param>
+/// <param name="Reviews">The reader's latest reviews, when this viewer may see them.</param>
 public sealed record ReaderProfileResponse(
     string Handle,
     string DisplayName,
@@ -52,7 +54,8 @@ public sealed record ReaderProfileResponse(
     bool SomethingHidden,
     VisibilitySettings? Visibility,
     string? Relation,
-    IReadOnlyList<ReaderCard>? Fellowship);
+    IReadOnlyList<ReaderCard>? Fellowship,
+    IReadOnlyList<ProfileReview>? Reviews);
 
 /// <summary>Readers' profiles: their own settings under /api/profile, and anyone's profile under /api/readers/{handle}.</summary>
 public static class ProfileEndpoints
@@ -175,9 +178,11 @@ public static class ProfileEndpoints
 
         var fellowship = Can(owner.FriendsVisibleTo) ? await FellowshipEndpoints.FriendsOfAsync(db, owner.Id, viewerId, cancellationToken) : null;
 
-        var hidden = !Can(owner.ProgressVisibleTo) || !Can(owner.ReadingVisibleTo) || !Can(owner.FriendsVisibleTo);
+        var reviews = Can(owner.ReviewsVisibleTo) ? await ReviewEndpoints.LatestAsync(db, owner.Id, isOwner, cancellationToken) : null;
+
+        var hidden = !Can(owner.ProgressVisibleTo) || !Can(owner.ReadingVisibleTo) || !Can(owner.FriendsVisibleTo) || !Can(owner.ReviewsVisibleTo);
         return TypedResults.Ok(new ReaderProfileResponse(
             owner.Handle!, owner.DisplayName, owner.Portrait?.ToApiName(), owner.Bio, owner.CreatedAt.Year, viewedAs, isOwner,
-            year, reading, volumes, hidden, isOwner ? VisibilitySettings.From(owner) : null, relation, fellowship));
+            year, reading, volumes, hidden, isOwner ? VisibilitySettings.From(owner) : null, relation, fellowship, reviews));
     }
 }

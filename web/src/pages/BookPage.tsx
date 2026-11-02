@@ -18,6 +18,7 @@ import { usePageTitle } from '../routing/usePageTitle';
 import { onShelfMessage, shelfName } from '../shelves/shelfText';
 import styles from './BookPage.module.css';
 import { BookProgress } from './BookProgress';
+import { BookReviews } from './BookReviews';
 
 const numberFormat = new Intl.NumberFormat('en-GB');
 const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -178,6 +179,7 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
             <RemoveButton
               title={book.title}
               pagesRead={entry.pagesRead}
+              reviewed={entry.reviewed}
               label={byHand ? 'Delete' : 'Remove'}
               busy={busy}
               onRemove={() => void remove()}
@@ -214,6 +216,7 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
         </p>
       </Frame>
       {entry && <BookProgress book={book} entry={entry} onEntry={onEntry} refresh={moves} />}
+      <BookReviews book={book} shelved={entry !== null} onReviewed={(reviewed) => entry && onEntry({ ...entry, reviewed })} />
     </>
   );
 }

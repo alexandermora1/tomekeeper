@@ -49,8 +49,8 @@ Confirmed by Alex on 2 November 2026: reviews with 1 to 5 stars, readers found b
 | --- | --- | --- |
 | 5.1 | Profiles: an address of one's own (`/readers/{handle}`, made from the name, changeable), a short text, who sees what (Everyone, Friends, Only you; Friends to begin with) for the year and volumes, Reading now, reviews and the fellowship, and "See your profile as" | Done |
 | 5.2 | Friends: finding readers by name or address, asking to be friends, accepting or ignoring, the Fellowship page; friends see what is shared with friends, and each other's fellowship | Done |
-| 5.3 | Reviews with 1 to 5 stars on book pages and profiles; The Chronicler quest counts them | Next |
-| 5.4 | Blocking (hidden both ways) and reporting (stored, and emailed to a moderator address) | |
+| 5.3 | Reviews with 1 to 5 stars on book pages and profiles; The Chronicler quest counts them | Done |
+| 5.4 | Blocking (hidden both ways) and reporting (stored, and emailed to a moderator address) | Next |
 
 ## Later stages
 

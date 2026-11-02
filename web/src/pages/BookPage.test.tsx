@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import type { Book } from '../api/books';
 import type { Progress } from '../api/progress';
 import type { ShelfEntry } from '../api/shelves';
@@ -26,8 +26,10 @@ const onShelf = (pageCount: number | null = null, page: number | null = null, pa
   page,
   pagesRead,
   fiction: null,
+  reviewed: false,
 });
 const PROGRESS = `/api/shelves/${ID}/progress`;
+const REVIEWS = `/api/books/${ID}/reviews`;
 const noProgress: Progress = { entry: onShelf(), reading: null, entries: [], earlierReadings: [] };
 /** Progress on page 120, logged in two entries. */
 const onPage120: Progress = {
@@ -45,6 +47,7 @@ describe('the book page', () => {
     fakeApi.signedIn();
     fakeApi.on('GET', `/api/books/${ID}`, { status: 200, body: dune });
     fakeApi.on('GET', PROGRESS, { status: 200, body: noProgress });
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: null, others: [] } });
   });
 
   it("shows the book's details and its cover through Tomekeeper's API", async () => {
@@ -227,5 +230,102 @@ describe('the book page', () => {
       await user.click(remove);
       expect(await screen.findByText('Dune is off your shelves.')).toBeInTheDocument();
     });
+  });
+});
+
+describe('reviews on the book page', () => {
+  const me = { handle: 'ingrid', displayName: 'Ingrid', portrait: 'knight' as const, relation: 'you' as const, since: null };
+  const myReview = { reader: me, rating: 4, text: 'Sand everywhere.\nWorth it.', writtenAt: '2026-10-20T10:00:00Z', editedAt: null };
+
+  beforeEach(() => {
+    fakeApi.signedIn();
+    fakeApi.on('GET', `/api/books/${ID}`, { status: 200, body: dune });
+    fakeApi.on('GET', PROGRESS, { status: 200, body: noProgress });
+    fakeApi.on('GET', `/api/shelves/${ID}`, { status: 200, body: onShelf() });
+  });
+
+  it('writes a review with stars and words', async () => {
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: null, others: [] } });
+    fakeApi.on('PUT', `/api/books/${ID}/review`, { status: 200, body: myReview });
+    const { user } = renderApp(`/books/${ID}`);
+    const reviews = await screen.findByRole('region', { name: 'Reviews' });
+
+    await user.click(await within(reviews).findByRole('radio', { name: '4 stars' }));
+    await user.type(within(reviews).getByRole('textbox', { name: 'Your review (if you like)' }), 'Sand everywhere.');
+    await user.click(within(reviews).getByRole('button', { name: 'Save review' }));
+
+    expect(await within(reviews).findByText('Review saved.')).toBeInTheDocument();
+    expect(fakeApi.sent('PUT', `/api/books/${ID}/review`)[0]?.body).toEqual({ rating: 4, text: 'Sand everywhere.' });
+    expect(within(reviews).getByRole('img', { name: '4 of 5 stars' })).toBeInTheDocument();
+    expect(within(reviews).getByRole('button', { name: 'Edit review' })).toBeInTheDocument();
+    await vi.waitFor(() => expect(within(reviews).getByRole('heading', { name: 'Your review' })).toHaveFocus());
+  });
+
+  it('needs a rating', async () => {
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: null, others: [] } });
+    const { user } = renderApp(`/books/${ID}`);
+
+    await user.click(await screen.findByRole('button', { name: 'Save review' }));
+
+    const summary = await screen.findByRole('group', { name: 'There is a problem' });
+    expect(within(summary).getByRole('link', { name: 'Choose from 1 to 5 stars.' })).toHaveAttribute('href', '#rating-1');
+    expect(fakeApi.sent('PUT', `/api/books/${ID}/review`)).toHaveLength(0);
+  });
+
+  it('shows the reviews of others the reader may see', async () => {
+    const tormod = { handle: 'tormod', displayName: 'Tormod', portrait: null, relation: 'friend' as const, since: null };
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: null, others: [{ ...myReview, reader: tormod, rating: 2, text: 'Too long.', editedAt: '2026-10-21T10:00:00Z' }] } });
+    fakeApi.on('GET', `/api/shelves/${ID}`, { status: 404 });
+    renderApp(`/books/${ID}`);
+
+    const reviews = await screen.findByRole('region', { name: 'Reviews' });
+    expect(await within(reviews).findByRole('link', { name: 'Tormod' })).toHaveAttribute('href', '/readers/tormod');
+    expect(reviews).toHaveTextContent('Tormod · friend');
+    expect(within(reviews).getByRole('img', { name: '2 of 5 stars' })).toBeInTheDocument();
+    expect(reviews).toHaveTextContent('20 October 2026, edited');
+    expect(reviews).toHaveTextContent('Too long.');
+    expect(reviews).toHaveTextContent('Put the book on one of your shelves to review it.');
+    expect(within(reviews).queryByRole('button', { name: 'Save review' })).not.toBeInTheDocument();
+  });
+
+  it('asks before deleting a review', async () => {
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: myReview, others: [] } });
+    fakeApi.on('DELETE', `/api/books/${ID}/review`, { status: 204 });
+    const { user } = renderApp(`/books/${ID}`);
+    const reviews = await screen.findByRole('region', { name: 'Reviews' });
+
+    await user.click(await within(reviews).findByRole('button', { name: 'Delete review' }));
+    expect(within(reviews).getByRole('button', { name: 'Yes, delete your review' })).toHaveAccessibleDescription(
+      'Delete your review? The words can’t be brought back.',
+    );
+    await user.click(within(reviews).getByRole('button', { name: 'Yes, delete your review' }));
+
+    expect(await within(reviews).findByText('Review deleted.')).toBeInTheDocument();
+    expect(fakeApi.sent('DELETE', `/api/books/${ID}/review`)).toHaveLength(1);
+    expect(within(reviews).getByRole('radio', { name: '4 stars' })).not.toBeChecked();
+  });
+
+  it('edits a review, starting from what was written', async () => {
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: myReview, others: [] } });
+    const { user } = renderApp(`/books/${ID}`);
+    const reviews = await screen.findByRole('region', { name: 'Reviews' });
+
+    await user.click(await within(reviews).findByRole('button', { name: 'Edit review' }));
+
+    expect(within(reviews).getByRole('radio', { name: '4 stars' })).toBeChecked();
+    expect(within(reviews).getByRole('textbox', { name: 'Your review (if you like)' })).toHaveValue('Sand everywhere.\nWorth it.');
+    await user.click(within(reviews).getByRole('button', { name: 'Cancel' }));
+    expect(within(reviews).getByRole('button', { name: 'Edit review' })).toBeInTheDocument();
+  });
+
+  it('warns that removing the book deletes the review', async () => {
+    fakeApi.on('GET', `/api/shelves/${ID}`, { status: 200, body: { ...onShelf(), reviewed: true } });
+    fakeApi.on('GET', REVIEWS, { status: 200, body: { mine: myReview, others: [] } });
+    const { user } = renderApp(`/books/${ID}`);
+
+    await user.click(await screen.findByRole('button', { name: 'Remove Dune' }));
+
+    expect(screen.getByRole('button', { name: 'Yes, remove Dune' })).toHaveAccessibleDescription('This also deletes your review.');
+    expect(fakeApi.sent('DELETE', `/api/shelves/${ID}`)).toHaveLength(0);
   });
 });

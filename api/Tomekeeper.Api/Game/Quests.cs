@@ -95,6 +95,14 @@ public static class Quests
             .Where(x => x.Count > 1000)
             .ToListAsync(cancellationToken);
 
+        // Reviews with words written in the year, oldest first. Stars alone don't count.
+        var yearStart = new DateTimeOffset(year, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var reviews = await db.Reviews.AsNoTracking()
+            .Where(r => r.UserId == userId && r.Text != null && r.WrittenAt >= yearStart && r.WrittenAt < yearStart.AddYears(1))
+            .Join(db.Books, r => r.BookId, b => b.Id, (r, b) => new { r.WrittenAt, b.Title })
+            .OrderBy(x => x.WrittenAt)
+            .ToListAsync(cancellationToken);
+
         var quests = new List<QuestResponse>();
         foreach (var quest in All)
         {
@@ -109,7 +117,9 @@ public static class Quests
                         ? ("active", road.Page * 100 / road.Count!.Value, $"{road.Title}, page {road.Page:N0} of {road.Count:N0}.")
                         : ("active", 0, "Start a book over 1,000 pages."),
                 "decades" => Decades(finished.Where(f => f.FirstPublishedYear is not null).Select(f => f.FirstPublishedYear!.Value / 10 * 10)),
-                "quill" => ("soon", 0, "Opens when reviews come to Tomekeeper."),
+                "quill" => reviews.Count >= 5
+                    ? ("done", 100, $"Done in {Month(DateOnly.FromDateTime(reviews[4].WrittenAt.UtcDateTime))} with a review of {reviews[4].Title}.")
+                    : ("active", reviews.Count * 20, $"{reviews.Count} of 5 reviews. Stars alone don’t count; write a few words."),
                 "nights" => year > today.Year || (year == today.Year && today.Month < 12)
                     ? ("soon", 0, "Opens 1 December.")
                     : Count(december, 1500, "pages in December", null),
