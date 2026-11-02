@@ -4,7 +4,9 @@ import { books, type Book } from '../api/books';
 import { shelves, type ShelfEntry, type ShelfId } from '../api/shelves';
 import { BookCover } from '../components/BookCover';
 import { Button } from '../components/Button';
+import { Fieldset } from '../components/forms/Fieldset';
 import { formErrorsFrom, problemMessage } from '../components/forms/formErrors';
+import formStyles from '../components/forms/forms.module.css';
 import { TextField } from '../components/forms/TextField';
 import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
@@ -196,6 +198,17 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
             }}
           />
         )}
+        {entry && (
+          <KindForm
+            book={book}
+            entry={entry}
+            onSaved={(saved) => {
+              onEntry(saved);
+              const fiction = saved.fiction ?? book.fiction;
+              setAnnouncement(`Saved. ${book.title} counts as ${fiction === null ? 'neither, until you choose' : fiction ? 'fiction' : 'nonfiction'}.`);
+            }}
+          />
+        )}
         <p role="status" className={styles.status}>
           {announcement}
         </p>
@@ -265,6 +278,56 @@ function PageCountForm({ book, entry, onSaved }: PageCountFormProps) {
       />
       <Button type="submit" variant="secondary" aria-disabled={pending || undefined}>
         {pending ? 'Saving…' : 'Save page count'}
+      </Button>
+    </form>
+  );
+}
+
+type Kind = 'fiction' | 'nonfiction' | 'guess';
+
+/** Fiction or nonfiction in the reader's view. It decides which quests and attributes the pages count for. */
+function KindForm({ book, entry, onSaved }: { book: Book; entry: ShelfEntry; onSaved: (entry: ShelfEntry) => void }) {
+  const [choice, setChoice] = useState<Kind>(entry.fiction === null ? 'guess' : entry.fiction ? 'fiction' : 'nonfiction');
+  const [error, setError] = useState<string | undefined>();
+  const [pending, setPending] = useState(false);
+  const guess = book.fiction === null ? 'not known' : book.fiction ? 'fiction' : 'nonfiction';
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    setPending(true);
+    setError(undefined);
+    try {
+      onSaved(await shelves.setKind(book.id, choice === 'guess' ? null : choice === 'fiction'));
+    } catch (failure) {
+      setError(problemMessage(failure));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <form noValidate onSubmit={handleSubmit} className={styles.kind}>
+      <Fieldset
+        legend="Fiction or nonfiction?"
+        hint={`It decides which quests the pages count for. Tomekeeper’s guess from Open Library: ${guess}.`}
+        error={error}
+      >
+        {(
+          [
+            ['fiction', 'Fiction'],
+            ['nonfiction', 'Nonfiction'],
+            ['guess', 'Go by Tomekeeper’s guess'],
+          ] as const
+        ).map(([id, label]) => (
+          <label key={id} className={formStyles.radio}>
+            <input type="radio" name="kind" value={id} checked={choice === id} onChange={() => setChoice(id)} />
+            {label}
+          </label>
+        ))}
+      </Fieldset>
+      <Button type="submit" variant="secondary" aria-disabled={pending || undefined}>
+        {pending ? 'Saving…' : 'Save choice'}
       </Button>
     </form>
   );

@@ -13,8 +13,9 @@ const recipes: Book = {
   firstPublishedYear: 1971,
   pageCount: 88,
   coverId: null,
+  fiction: false,
 };
-const entry = { book: recipes, shelf: 'reading', shelvedAt: '2026-11-01T12:00:00Z', pageCount: null, page: null, pagesRead: 0 };
+const entry = { book: recipes, shelf: 'reading', shelvedAt: '2026-11-01T12:00:00Z', pageCount: null, page: null, pagesRead: 0, fiction: null };
 
 describe('adding a book by hand', () => {
   beforeEach(() => {
@@ -39,6 +40,7 @@ describe('adding a book by hand', () => {
     await user.type(screen.getByLabelText('Pages (if you know them)'), '88');
     expect(screen.getByRole('radio', { name: 'Want to read' })).toBeChecked();
     await user.click(screen.getByRole('radio', { name: 'Reading now' }));
+    await user.click(screen.getByRole('radio', { name: 'Nonfiction' }));
     await user.click(screen.getByRole('button', { name: 'Add to your shelves' }));
 
     expect(await screen.findByRole('heading', { level: 1, name: "Grandmother's Recipes" })).toBeInTheDocument();
@@ -50,6 +52,7 @@ describe('adding a book by hand', () => {
       firstPublishedYear: 1971,
       pageCount: 88,
       shelf: 'reading',
+      fiction: false,
     });
     expect(screen.getByText('Added by you, by hand. Only you can see it.')).toBeInTheDocument();
   });

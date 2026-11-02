@@ -19,10 +19,11 @@ public sealed record BookResponse(
     IReadOnlyList<string> Authors,
     int? FirstPublishedYear,
     int? PageCount,
-    int? CoverId)
+    int? CoverId,
+    bool? Fiction)
 {
     public static BookResponse From(Book book) => new(
-        book.Id, book.OpenLibraryKey, book.Title, book.Subtitle, book.Authors, book.FirstPublishedYear, book.PageCount, book.CoverId);
+        book.Id, book.OpenLibraryKey, book.Title, book.Subtitle, book.Authors, book.FirstPublishedYear, book.PageCount, book.CoverId, book.Fiction);
 }
 
 /// <param name="BookId">Set when the book is already in Tomekeeper's catalogue.</param>
@@ -43,7 +44,7 @@ public sealed record BookSearchResponse(string Query, int Total, IReadOnlyList<B
 
 /// <summary>A book Open Library doesn't have, typed in by the reader, and the shelf to put it on.</summary>
 public sealed record HandBookRequest(
-    string? Title, string? Subtitle, IReadOnlyList<string?>? Authors, int? FirstPublishedYear, int? PageCount, string? Shelf);
+    string? Title, string? Subtitle, IReadOnlyList<string?>? Authors, int? FirstPublishedYear, int? PageCount, string? Shelf, bool? Fiction = null);
 
 /// <summary>Finding books on Open Library and keeping them in Tomekeeper's own catalogue, under /api/books.</summary>
 public static partial class BookEndpoints
@@ -142,6 +143,7 @@ public static partial class BookEndpoints
             FirstPublishedYear = work.FirstPublishedYear,
             PageCount = work.PageCount,
             CoverId = work.CoverId,
+            Fiction = work.Fiction,
             AddedAt = now,
             UpdatedAt = now,
         };
@@ -209,6 +211,7 @@ public static partial class BookEndpoints
             Authors = authors,
             FirstPublishedYear = request.FirstPublishedYear,
             PageCount = request.PageCount,
+            Fiction = request.Fiction,
             AddedById = userId,
             AddedAt = now,
             UpdatedAt = now,

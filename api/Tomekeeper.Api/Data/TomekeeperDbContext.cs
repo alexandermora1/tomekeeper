@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Books;
+using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Shelves;
@@ -26,6 +27,8 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
     public DbSet<Reading> Readings => Set<Reading>();
 
     public DbSet<ProgressEntry> ProgressEntries => Set<ProgressEntry>();
+
+    public DbSet<GearPiece> Gear => Set<GearPiece>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -116,6 +119,15 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             entry.HasOne<Reading>().WithMany().HasForeignKey(p => p.ReadingId).OnDelete(DeleteBehavior.Cascade);
             // Pages read in a year or a month, for the goal and the Twelve Labours.
             entry.HasIndex(p => new { p.UserId, p.ReadOn });
+        });
+
+        builder.Entity<GearPiece>(gear =>
+        {
+            gear.ToTable("gear");
+            // Each piece once per reader: earned once, kept for good.
+            gear.HasKey(g => new { g.UserId, g.Item });
+            gear.Property(g => g.Item).HasMaxLength(20);
+            gear.HasOne<User>().WithMany().HasForeignKey(g => g.UserId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

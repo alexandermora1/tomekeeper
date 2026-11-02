@@ -161,8 +161,10 @@ public sealed class FakeOpenLibrary : HttpMessageHandler
 
     public static readonly byte[] CoverBytes = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 0xFF, 0xD9];
 
-    public static Dictionary<string, object?> Work(string key, string title, string[] authors, int? year, int? pages, int? cover) => new()
+    public static Dictionary<string, object?> Work(
+        string key, string title, string[] authors, int? year, int? pages, int? cover, string[]? subjects = null) => new()
     {
+        ["subject"] = subjects,
         ["key"] = $"/works/{key}",
         ["title"] = title,
         ["author_name"] = authors,

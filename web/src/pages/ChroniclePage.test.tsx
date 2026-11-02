@@ -9,12 +9,13 @@ import { paceText } from './ChroniclePage';
 const YEAR = new Date().getFullYear();
 const ID = '01a1a000-0000-7000-8000-000000000001';
 const dune: ShelfEntry = {
-  book: { id: ID, openLibraryKey: 'OL893415W', title: 'Dune', subtitle: null, authors: ['Frank Herbert'], firstPublishedYear: 1965, pageCount: 604, coverId: null },
+  book: { id: ID, openLibraryKey: 'OL893415W', title: 'Dune', subtitle: null, authors: ['Frank Herbert'], firstPublishedYear: 1965, pageCount: 604, coverId: null, fiction: true },
   shelf: 'reading',
   shelvedAt: '2026-11-01T12:00:00Z',
   pageCount: null,
   page: 120,
   pagesRead: 120,
+  fiction: null,
 };
 const year = (changes: Partial<Chronicle> = {}): Chronicle => ({
   year: YEAR,

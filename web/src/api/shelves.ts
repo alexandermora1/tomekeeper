@@ -17,6 +17,8 @@ export interface ShelfEntry {
   page: number | null;
   /** All pages logged for the book. Taking it off the shelves deletes them. */
   pagesRead: number;
+  /** The reader's own say on fiction or nonfiction, if they gave one; otherwise the book's guess applies. */
+  fiction: boolean | null;
 }
 
 const path = (bookId: string) => `/api/shelves/${encodeURIComponent(bookId)}`;
@@ -41,6 +43,8 @@ export const shelves = {
   /** Sets the page count of the reader's own edition; null goes back to the book's usual count. */
   setPageCount: (bookId: string, pageCount: number | null) =>
     apiRequest<ShelfEntry>('PUT', `${path(bookId)}/page-count`, { pageCount }),
+  /** Fiction (true) or nonfiction (false) in the reader's view, or null to go back to the book's guess. */
+  setKind: (bookId: string, fiction: boolean | null) => apiRequest<ShelfEntry>('PUT', `${path(bookId)}/kind`, { fiction }),
   /** Takes a book off the reader's shelves. */
   remove: (bookId: string) => apiRequest('DELETE', path(bookId)),
 };

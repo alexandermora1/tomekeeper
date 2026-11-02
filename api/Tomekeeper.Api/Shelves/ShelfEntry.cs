@@ -30,4 +30,7 @@ public sealed class ShelfEntry
 
     /// <summary>The page count of the reader's own edition, when they have set one. Otherwise the book's usual count applies.</summary>
     public int? PageCount { get; set; }
+
+    /// <summary>The reader's own say on fiction or nonfiction, when Tomekeeper's guess is wrong or missing.</summary>
+    public bool? Fiction { get; set; }
 }

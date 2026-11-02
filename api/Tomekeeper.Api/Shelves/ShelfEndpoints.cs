@@ -20,7 +20,11 @@ public sealed record PageCountRequest(int? PageCount);
 /// <param name="PageCount">The page count of the reader's own edition, if they have set one.</param>
 /// <param name="Page">The page reached in the reading in progress, or null when none is.</param>
 /// <param name="PagesRead">All pages logged for the book, in every reading.</param>
-public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount, int? Page, int PagesRead);
+/// <param name="Fiction">The reader's own say on fiction or nonfiction, if they gave one (the book's guess is in Book).</param>
+public sealed record ShelfEntryResponse(BookResponse Book, string Shelf, DateTimeOffset ShelvedAt, int? PageCount, int? Page, int PagesRead, bool? Fiction);
+
+/// <param name="Fiction">True for fiction, false for nonfiction, null to go back to Tomekeeper's guess.</param>
+public sealed record KindRequest(bool? Fiction);
 
 public static class ShelfEntryResponses
 {
@@ -43,7 +47,8 @@ public static class ShelfEntryResponses
             .Select(e => new ShelfEntryResponse(
                 BookResponse.From(e.Book), e.Entry.Shelf.ToApiName(), e.Entry.ShelvedAt, e.Entry.PageCount,
                 open.TryGetValue(e.Entry.BookId, out var page) ? page : null,
-                read.GetValueOrDefault(e.Entry.BookId)))
+                read.GetValueOrDefault(e.Entry.BookId),
+                e.Entry.Fiction))
             .ToList();
     }
 
@@ -71,6 +76,7 @@ public static class ShelfEndpoints
         shelves.MapGet("/", GetShelves);
         shelves.MapGet("/{bookId:guid}", GetEntry);
         shelves.MapPut("/{bookId:guid}/page-count", PutPageCount);
+        shelves.MapPut("/{bookId:guid}/kind", PutKind);
         shelves.MapPut("/{bookId:guid}", PutOnShelf);
         shelves.MapDelete("/{bookId:guid}", TakeOff);
         return shelves;
@@ -179,6 +185,19 @@ public static class ShelfEndpoints
                 db.ChangeTracker.Clear();
             }
         }
+    }
+
+    /// <summary>Fiction or nonfiction, in the reader's own view. It decides which quests and attributes the pages count for.</summary>
+    private static async Task<Results<Ok<ShelfEntryResponse>, NotFound>> PutKind(
+        Guid bookId, KindRequest request, ClaimsPrincipal principal, TomekeeperDbContext db, CancellationToken cancellationToken)
+    {
+        var userId = principal.GetUserId();
+        var entry = await db.ShelfEntries.Include(e => e.Book)
+            .FirstOrDefaultAsync(e => e.UserId == userId && e.BookId == bookId, cancellationToken);
+        if (entry is null) return TypedResults.NotFound();
+        entry.Fiction = request.Fiction;
+        await db.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok(await ShelfEntryResponses.BuildAsync(db, entry, entry.Book, cancellationToken));
     }
 
     /// <summary>

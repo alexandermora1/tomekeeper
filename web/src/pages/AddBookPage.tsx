@@ -20,9 +20,16 @@ const FIELDS = [
   { name: 'authors', id: 'authors' },
   { name: 'firstPublishedYear', id: 'first-published-year' },
   { name: 'pageCount', id: 'page-count' },
+  { name: 'fiction', id: 'kind-fiction' },
   { name: 'shelf', id: 'shelf-reading' },
 ] as const;
 type Field = (typeof FIELDS)[number]['name'];
+
+const KINDS = [
+  { id: 'fiction', label: 'Fiction' },
+  { id: 'nonfiction', label: 'Nonfiction' },
+  { id: 'unsure', label: 'Not sure' },
+] as const;
 
 /** Adding a book Open Library doesn't have. It goes straight onto one of the reader's shelves. */
 export function AddBookPage() {
@@ -57,6 +64,7 @@ export function AddBookPage() {
         firstPublishedYear: year,
         pageCount: pages,
         shelf: (form.get('shelf') as ShelfId | null) ?? 'wantToRead',
+        fiction: form.get('kind') === 'fiction' ? true : form.get('kind') === 'nonfiction' ? false : null,
       });
       navigate(`/books/${entry.book.id}`);
     } catch (error) {
@@ -101,6 +109,14 @@ export function AddBookPage() {
           autoComplete="off"
           error={errors.fields.pageCount}
         />
+        <Fieldset legend="Fiction or nonfiction?" hint="It decides which quests the pages count for." error={errors.fields.fiction}>
+          {KINDS.map((kind) => (
+            <label key={kind.id} className={formStyles.radio}>
+              <input type="radio" name="kind" id={`kind-${kind.id}`} value={kind.id} defaultChecked={kind.id === 'unsure'} />
+              {kind.label}
+            </label>
+          ))}
+        </Fieldset>
         <Fieldset legend="Put it on" error={errors.fields.shelf}>
           {SHELVES.map((shelf) => (
             <label key={shelf.id} className={formStyles.radio}>

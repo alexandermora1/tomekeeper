@@ -30,6 +30,9 @@ public sealed class Book
     /// <summary>Open Library's id for the cover image, if there is one.</summary>
     public int? CoverId { get; set; }
 
+    /// <summary>Fiction or nonfiction, guessed from Open Library's subjects; null when unknown.</summary>
+    public bool? Fiction { get; set; }
+
     /// <summary>The reader who added the book by hand, or null for books from Open Library, which everyone can see.</summary>
     public Guid? AddedById { get; set; }
 

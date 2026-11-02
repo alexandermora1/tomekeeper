@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, has begun: XP, levels and titles. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is under way: XP, levels, titles, quests and gear. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -137,6 +137,14 @@ The home page (`/`) shows **The Year's Reckoning**: pages read and books finishe
 Readers earn 1 XP per page they log, and a quarter of a book's pages when they finish it. The XP needed for a level is 25 × (level − 1) × (level + 20), so each level costs a little more than the one before: level 2 at 550 XP (about two books), 10 at 6,750, 15 at 12,250 and 20 at 19,000, which takes a year of very keen reading. Levels are the same for everyone and start again each 1 January. The titles are Novice (levels 1 to 4), Reader (5 to 9), Wayfarer (10 to 14), Scholar (15 to 19) and Sage (20 and up).
 
 The Quests page (`/quests`) shows "Alex the Wayfarer", the year as a volume in Roman numerals, the XP with a bar to the next level and the titles; the chronicle shows the level and links there. `GET /api/character/{year}` counts the XP from the reader's progress, so nothing new is stored. The rules live in `Game/Levels.cs`.
+
+### Quests and gear
+
+Each year has six quests, one for each piece of gear: **The Bookbinder** (finish ten books: Bookbinder’s Gloves, hands), **The Scholar** (2,000 pages of nonfiction: Scholar’s Spectacles, head), **The Long Road** (finish a book over 1,000 pages: Pilgrim’s Satchel), **Five Decades** (finish books first published in five different decades: Wayfarer’s Cloak), **The Chronicler** (write five reviews: Chronicler’s Quill; it opens when reviews come in stage 5) and **The Long Nights** (1,500 pages in December: Lantern of Long Nights; it opens on 1 December). `GET /api/quests/{year}` works them out from the reader's progress. When a quest is done, its gear is recorded in the `gear` table and kept for good, even if the progress is changed later. Gear is only for show.
+
+The Quests page shows the portrait with six medallions around it, gold when earned; each is a button (`aria-pressed`) that tells where its piece comes from. Below, the quests of the year can be filtered: All, Under way, Complete, Coming.
+
+**Fiction or nonfiction** decides which quests (and, in 4.3, attributes) pages count for. When a book is saved from Open Library, Tomekeeper guesses from its subjects ("Fiction", "Science fiction" and so on); books added by hand ask. Readers can give their own say on the book page (`PUT /api/shelves/{bookId}/kind`), which counts before the guess.
 
 ### Books added by hand
 

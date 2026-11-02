@@ -38,8 +38,8 @@ Confirmed by Alex on 2 November 2026: the titles by level, the six quests with t
 | Step | What | Status |
 | --- | --- | --- |
 | 4.1 | XP and levels: 1 XP per page, a quarter of a book's pages for finishing it, levels from 25 × (level − 1) × (level + 20) XP, starting again each January; titles Novice (1–4), Reader (5–9), Wayfarer (10–14), Scholar (15–19), Sage (20+). `GET /api/character/{year}`, the Quests page with level and titles, the level on the chronicle | Done |
-| 4.2 | Quests and gear: the six yearly quests (The Bookbinder, The Scholar, The Long Road, Five Decades, The Chronicler, The Long Nights), gear kept for good, medallions around the portrait | Next |
-| 4.3 | Attributes (Endurance, Wisdom, Imagination, Wanderlust: a point per 500 pages of each kind, kept across years) and volumes (each year bound when it ends) | |
+| 4.2 | Quests and gear: the six yearly quests (The Bookbinder, The Scholar, The Long Road, Five Decades, The Chronicler, The Long Nights), gear kept for good in the `gear` table, medallions around the portrait; fiction or nonfiction from Open Library's subjects, the add form and the reader's own say | Done |
+| 4.3 | Attributes (Endurance, Wisdom, Imagination, Wanderlust: a point per 500 pages of each kind, kept across years) and volumes (each year bound when it ends) | Next |
 
 ## Later stages
 

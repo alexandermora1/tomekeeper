@@ -16,6 +16,7 @@ const dune: Book = {
   firstPublishedYear: 1965,
   pageCount: 604,
   coverId: 11481354,
+  fiction: true,
 };
 const onShelf = (pageCount: number | null = null, page: number | null = null, pagesRead = 0): ShelfEntry => ({
   book: dune,
@@ -24,6 +25,7 @@ const onShelf = (pageCount: number | null = null, page: number | null = null, pa
   pageCount,
   page,
   pagesRead,
+  fiction: null,
 });
 const PROGRESS = `/api/shelves/${ID}/progress`;
 const noProgress: Progress = { entry: onShelf(), reading: null, entries: [], earlierReadings: [] };
@@ -194,6 +196,20 @@ describe('the book page', () => {
 
       expect(await screen.findByText('The last entry is taken back.')).toBeInTheDocument();
       expect(document.getElementById('progress-summary')).toHaveTextContent('On page 40 of 604');
+    });
+
+    it('lets the reader say whether the book is fiction or nonfiction', async () => {
+      fakeApi.on('PUT', `/api/shelves/${ID}/kind`, { status: 200, body: { ...onShelf(), fiction: false } });
+      const { user } = renderApp(`/books/${ID}`);
+
+      const group = await screen.findByRole('group', { name: 'Fiction or nonfiction?' });
+      expect(group).toHaveAccessibleDescription('It decides which quests the pages count for. Tomekeeper’s guess from Open Library: fiction.');
+      expect(screen.getByRole('radio', { name: 'Go by Tomekeeper’s guess' })).toBeChecked();
+      await user.click(screen.getByRole('radio', { name: 'Nonfiction' }));
+      await user.click(screen.getByRole('button', { name: 'Save choice' }));
+
+      expect(await screen.findByText('Saved. Dune counts as nonfiction.')).toBeInTheDocument();
+      expect(fakeApi.sent('PUT', `/api/shelves/${ID}/kind`)[0]?.body).toEqual({ fiction: false });
     });
 
     it('asks before removing a book with logged pages', async () => {

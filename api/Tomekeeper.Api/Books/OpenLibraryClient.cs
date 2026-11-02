@@ -31,7 +31,8 @@ public sealed record OpenLibraryWork(
     int? FirstPublishedYear,
     int? PageCount,
     int? CoverId,
-    int? EditionCount);
+    int? EditionCount,
+    bool? Fiction = null);
 
 public sealed record OpenLibrarySearch(int Total, IReadOnlyList<OpenLibraryWork> Works);
 
@@ -65,7 +66,8 @@ public sealed class OpenLibraryClient(HttpClient http, IMemoryCache cache, ILogg
     public async Task<OpenLibraryWork?> GetWorkAsync(string key, CancellationToken cancellationToken)
     {
         var query = Uri.EscapeDataString($"key:\"/works/{key}\"");
-        var result = await GetSearchAsync($"search.json?q={query}&fields={Fields}&limit=1", cancellationToken);
+        // The subjects are only asked for here, when a book is saved: they tell fiction from nonfiction.
+        var result = await GetSearchAsync($"search.json?q={query}&fields={Fields},subject&limit=1", cancellationToken);
         return result.Works.FirstOrDefault(w => w.Key == key);
     }
 
@@ -98,7 +100,8 @@ public sealed class OpenLibraryClient(HttpClient http, IMemoryCache cache, ILogg
                 FirstPublishedYear: d.FirstPublishYear,
                 PageCount: d.NumberOfPagesMedian is > 0 ? d.NumberOfPagesMedian : null,
                 CoverId: d.CoverI is > 0 ? d.CoverI : null,
-                EditionCount: d.EditionCount))
+                EditionCount: d.EditionCount,
+                Fiction: FictionFrom(d.Subject)))
             .ToList();
         return new OpenLibrarySearch(response?.NumFound ?? response?.NumFoundSnake ?? works.Count, works);
     }
@@ -116,7 +119,21 @@ public sealed class OpenLibraryClient(HttpClient http, IMemoryCache cache, ILogg
         [property: JsonPropertyName("first_publish_year")] int? FirstPublishYear,
         [property: JsonPropertyName("number_of_pages_median")] int? NumberOfPagesMedian,
         [property: JsonPropertyName("cover_i")] int? CoverI,
-        [property: JsonPropertyName("edition_count")] int? EditionCount);
+        [property: JsonPropertyName("edition_count")] int? EditionCount,
+        [property: JsonPropertyName("subject")] List<string>? Subject);
+
+    /// <summary>
+    /// A guess from Open Library's subjects: fiction when a subject says so ("Fiction", "Science fiction",
+    /// "Fiction, fantasy, epic"), nonfiction when there are subjects and none does, unknown when there are none.
+    /// Readers can correct it for themselves.
+    /// </summary>
+    public static bool? FictionFrom(IReadOnlyCollection<string>? subjects)
+    {
+        if (subjects is null || subjects.Count == 0) return null;
+        return subjects.Any(s => s.Contains("fiction", StringComparison.OrdinalIgnoreCase)
+            && !s.Contains("nonfiction", StringComparison.OrdinalIgnoreCase)
+            && !s.Contains("non-fiction", StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 /// <summary>Keeps all calls to Open Library from this server under 3 a second, waiting briefly when needed.</summary>

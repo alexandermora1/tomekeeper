@@ -224,6 +224,10 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("cover_id");
 
+                    b.Property<bool?>("Fiction")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fiction");
+
                     b.Property<int?>("FirstPublishedYear")
                         .HasColumnType("integer")
                         .HasColumnName("first_published_year");
@@ -263,6 +267,31 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasDatabaseName("ix_books_open_library_key");
 
                     b.ToTable("books", (string)null);
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Game.GearPiece", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Item")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("item");
+
+                    b.Property<DateTimeOffset>("EarnedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("earned_at");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer")
+                        .HasColumnName("year");
+
+                    b.HasKey("UserId", "Item")
+                        .HasName("pk_gear");
+
+                    b.ToTable("gear", (string)null);
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Goals.ReadingGoal", b =>
@@ -414,6 +443,10 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("added_at");
 
+                    b.Property<bool?>("Fiction")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fiction");
+
                     b.Property<int?>("PageCount")
                         .HasColumnType("integer")
                         .HasColumnName("page_count");
@@ -482,6 +515,16 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasForeignKey("AddedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_books_users_added_by_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Game.GearPiece", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_gear_users_user_id");
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Goals.ReadingGoal", b =>

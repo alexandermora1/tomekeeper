@@ -11,6 +11,8 @@ export interface Book {
   firstPublishedYear: number | null;
   pageCount: number | null;
   coverId: number | null;
+  /** Fiction or nonfiction, guessed from Open Library's subjects (or given when added by hand); null when unknown. */
+  fiction: boolean | null;
 }
 
 /**
@@ -48,6 +50,7 @@ export interface HandBook {
   firstPublishedYear: number | null;
   pageCount: number | null;
   shelf: ShelfId;
+  fiction: boolean | null;
 }
 
 export const books = {

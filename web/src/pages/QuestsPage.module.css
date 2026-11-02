@@ -6,10 +6,6 @@
   margin-top: 8px;
 }
 
-.portrait {
-  flex: none;
-}
-
 .frame {
   flex: 1 1 420px;
   min-width: 0;
@@ -52,4 +48,94 @@
   border-width: 2px;
   background: var(--ink);
   color: var(--page);
+}
+
+.gearFrame {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.questsFrame {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.filters button {
+  min-height: 44px;
+  padding: 4px 14px;
+  border: 2px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.filters button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--page);
+}
+
+.quests {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quest {
+  padding: 12px 14px;
+  border: 2px solid var(--ink);
+}
+
+.quest p {
+  margin: 4px 0 0;
+}
+
+/* Done quests are raised, the ones not yet open are dashed, as in the 2c design */
+.done {
+  background: var(--raised);
+}
+
+.soon {
+  border: 2px dashed var(--muted);
+}
+
+.questHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.questName {
+  margin: 0;
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+}
+
+.questState {
+  font-weight: 700;
+}
+
+.done .questState {
+  color: var(--success);
+}
+
+.soon .questState,
+.soon .progress {
+  color: var(--muted);
+}
+
+.reward {
+  font-style: italic;
 }
