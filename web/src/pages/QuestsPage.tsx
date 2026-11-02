@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { character as characterApi, type Character } from '../api/character';
+import { legacy as legacyApi, type Legacy } from '../api/legacy';
 import { quests as questsApi, type Quest, type Quests } from '../api/quests';
 import { problemMessage } from '../components/forms/formErrors';
 import { Frame } from '../components/Frame';
@@ -16,7 +17,7 @@ const numberFormat = new Intl.NumberFormat('en-GB');
 
 /**
  * The reader's character for the year: the portrait with the gear earned so far, level, title and XP, and the
- * six quests of the year. (Attributes and volumes come in 4.3.)
+ * attributes, the six quests of the year, and the volumes of the years so far.
  */
 export function QuestsPage() {
   usePageTitle('Character and quests');
@@ -24,15 +25,17 @@ export function QuestsPage() {
   const [year] = useState(() => new Date().getFullYear());
   const [sheet, setSheet] = useState<Character | undefined>();
   const [quests, setQuests] = useState<Quests | undefined>();
+  const [legacy, setLegacy] = useState<Legacy | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
 
   useEffect(() => {
     let current = true;
-    Promise.all([characterApi.get(year), questsApi.get(year)]).then(
-      ([loadedSheet, loadedQuests]) => {
+    Promise.all([characterApi.get(year), questsApi.get(year), legacyApi.get()]).then(
+      ([loadedSheet, loadedQuests, loadedLegacy]) => {
         if (!current) return;
         setSheet(loadedSheet);
         setQuests(loadedQuests);
+        setLegacy(loadedLegacy);
       },
       (problem: unknown) => current && setFailed(problemMessage(problem)),
     );
@@ -49,7 +52,7 @@ export function QuestsPage() {
       </p>
       <h1 className={chronicleStyles.title}>{sheet && reader ? `${reader.displayName} the ${sheet.title}` : 'Character and quests'}</h1>
       {failed && <p>{failed}</p>}
-      {sheet && quests && (
+      {sheet && quests && legacy && (
         <div className={styles.columns}>
           <Frame title="Portrait and gear" className={styles.gearFrame}>
             <p className={styles.rule}>
@@ -57,7 +60,7 @@ export function QuestsPage() {
             </p>
             <GearRing gear={quests.gear}>{reader?.portrait && <Portrait id={reader.portrait} size="large" />}</GearRing>
           </Frame>
-          <Frame title="Level" className={styles.frame}>
+          <Frame title="Level and attributes" className={styles.frame}>
             <LevelBar sheet={sheet} />
             <h3 id="titles" className={styles.subheading}>
               Titles
@@ -72,9 +75,13 @@ export function QuestsPage() {
                 );
               })}
             </ol>
+            <Attributes legacy={legacy} />
           </Frame>
           <Frame title={`Quests of ${toRoman(year)}`} className={styles.questsFrame}>
             <QuestList quests={quests.quests} />
+          </Frame>
+          <Frame title="Volumes" className={styles.questsFrame}>
+            <Volumes legacy={legacy} thisYear={year} />
           </Frame>
         </div>
       )}
@@ -152,6 +159,80 @@ function QuestList({ quests }: { quests: Quest[] }) {
       <p className={styles.rule}>
         <span aria-hidden="true">☞ </span>New quests open each 1 January. Gear you earn is kept for good.
       </p>
+    </>
+  );
+}
+
+function Attributes({ legacy }: { legacy: Legacy }) {
+  return (
+    <>
+      <h3 id="attributes" className={styles.subheading}>
+        Attributes
+      </h3>
+      <p className={styles.rule}>One point per 500 pages of each kind. They grow for as long as you read.</p>
+      <ul className={styles.attributes} aria-labelledby="attributes">
+        {legacy.attributes.map((attribute) => (
+          <li key={attribute.name}>
+            <div className={styles.attributeHead}>
+              <strong>{attribute.name}</strong>
+              <span className={styles.attributeValue}>{attribute.value}</span>
+            </div>
+            <div className={`${chronicleStyles.bar} ${chronicleStyles.blue}`} aria-hidden="true">
+              <span style={{ width: `${((500 - attribute.toNext) / 500) * 100}%` }} />
+            </div>
+            <p className={styles.attributeFrom}>
+              {attribute.from} · next point in {numberFormat.format(attribute.toNext)} pages
+            </p>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function Volumes({ legacy, thisYear }: { legacy: Legacy; thisYear: number }) {
+  return (
+    <>
+      <p className={styles.rule}>Each year is bound as a volume when it ends.</p>
+      {/* Focusable, so keyboard users can scroll the table sideways on a narrow screen. */}
+      <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Volumes table">
+        <table className={styles.volumes}>
+          <thead>
+            <tr>
+              <th scope="col">Volume</th>
+              <th scope="col">Pages</th>
+              <th scope="col">Books</th>
+              <th scope="col">Level reached</th>
+              <th scope="col">Quests</th>
+            </tr>
+          </thead>
+          <tbody>
+            {legacy.volumes.map((volume) => {
+              const soFar = volume.year === thisYear ? ' so far' : '';
+              return (
+                <tr key={volume.year}>
+                  <th scope="row">
+                    {toRoman(volume.year)} <span className="visually-hidden">({volume.year})</span>
+                  </th>
+                  <td>
+                    {numberFormat.format(volume.pages)}
+                    {soFar}
+                  </td>
+                  <td>
+                    {numberFormat.format(volume.books)}
+                    {soFar}
+                  </td>
+                  <td>
+                    {volume.level}
+                    {soFar}
+                  </td>
+                  <td>{volume.quests} of 6</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

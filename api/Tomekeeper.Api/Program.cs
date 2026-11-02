@@ -156,6 +156,7 @@ app.MapProgressEndpoints();
 app.MapChronicleEndpoints();
 app.MapCharacterEndpoints();
 app.MapQuestEndpoints();
+app.MapLegacyEndpoints();
 
 app.Run();
 

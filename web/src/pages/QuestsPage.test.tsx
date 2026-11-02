@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import type { Character } from '../api/character';
+import type { Legacy } from '../api/legacy';
 import type { Quests } from '../api/quests';
 import { toRoman } from '../game/roman';
 import { fakeApi, sampleReader } from '../test/fakeApi';
@@ -41,11 +42,25 @@ const quests: Quests = {
   ],
 };
 
+const legacy: Legacy = {
+  attributes: [
+    { name: 'Endurance', from: 'Pages in books over 600 pages', pages: 23100, value: 46, toNext: 400 },
+    { name: 'Wisdom', from: 'Nonfiction pages', pages: 11050, value: 22, toNext: 450 },
+    { name: 'Imagination', from: 'Fiction pages', pages: 31600, value: 63, toNext: 400 },
+    { name: 'Wanderlust', from: 'Pages by authors new to you', pages: 9700, value: 19, toNext: 300 },
+  ],
+  volumes: [
+    { year: YEAR, pages: 9840, books: 13, level: 14, quests: 2 },
+    { year: YEAR - 1, pages: 10410, books: 18, level: 12, quests: 4 },
+  ],
+};
+
 describe('the quests page', () => {
   beforeEach(() => {
     fakeApi.signedIn();
     fakeApi.on('GET', `/api/character/${YEAR}`, { status: 200, body: sheet });
     fakeApi.on('GET', `/api/quests/${YEAR}`, { status: 200, body: quests });
+    fakeApi.on('GET', '/api/legacy', { status: 200, body: legacy });
   });
 
   it('shows the reader with their title, level and XP for the year', async () => {
@@ -54,7 +69,7 @@ describe('the quests page', () => {
     expect(await screen.findByRole('heading', { level: 1, name: `${sampleReader.displayName} the Wayfarer` })).toBeInTheDocument();
     expect(screen.getByText(`Volume ${toRoman(YEAR)} · Level 14`)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Quests' })).toHaveAttribute('aria-current', 'page');
-    const level = screen.getByRole('region', { name: 'Level' });
+    const level = screen.getByRole('region', { name: 'Level and attributes' });
     expect(level).toHaveTextContent('12,080 XP this year');
     expect(level).toHaveTextContent('170 XP to level 15. So far: 10,400 for pages and 1,680 for finishing books.');
     await vi.waitFor(() => expect(document.title).toBe('Character and quests – Tomekeeper'));
@@ -101,6 +116,25 @@ describe('the quests page', () => {
 
     expect(within(frame).getByRole('button', { name: 'Complete' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(within(frame).getByRole('list', { name: 'Quests' })).getAllByRole('listitem')).toHaveLength(1);
+  });
+
+  it('shows the attributes, which grow a point per 500 pages', async () => {
+    renderApp('/quests');
+
+    const attributes = within(await screen.findByRole('list', { name: 'Attributes' })).getAllByRole('listitem');
+    expect(attributes).toHaveLength(4);
+    expect(attributes[0]).toHaveTextContent('Endurance46Pages in books over 600 pages · next point in 400 pages');
+    expect(attributes[3]).toHaveTextContent('Wanderlust19Pages by authors new to you · next point in 300 pages');
+  });
+
+  it('lists each year as a volume in a table', async () => {
+    renderApp('/quests');
+
+    const table = await screen.findByRole('table');
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Volume', 'Pages', 'Books', 'Level reached', 'Quests']);
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows[0]).toHaveTextContent(`${toRoman(YEAR)} (${YEAR})9,840 so far13 so far14 so far2 of 6`);
+    expect(rows[1]).toHaveTextContent(`${toRoman(YEAR - 1)} (${YEAR - 1})10,4101812` + '4 of 6');
   });
 
   it('writes years in Roman numerals', () => {

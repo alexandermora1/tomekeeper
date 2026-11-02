@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is under way: XP, levels, titles, quests and gear. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -145,6 +145,10 @@ Each year has six quests, one for each piece of gear: **The Bookbinder** (finish
 The Quests page shows the portrait with six medallions around it, gold when earned; each is a button (`aria-pressed`) that tells where its piece comes from. Below, the quests of the year can be filtered: All, Under way, Complete, Coming.
 
 **Fiction or nonfiction** decides which quests (and, in 4.3, attributes) pages count for. When a book is saved from Open Library, Tomekeeper guesses from its subjects ("Fiction", "Science fiction" and so on); books added by hand ask. Readers can give their own say on the book page (`PUT /api/shelves/{bookId}/kind`), which counts before the guess.
+
+### Attributes and volumes
+
+Four attributes grow for as long as the reader reads, one point per 500 pages of their kind: **Endurance** (pages in books over 600 pages), **Wisdom** (nonfiction pages), **Imagination** (fiction pages) and **Wanderlust** (pages in books by authors new to the reader: none of the book's authors wrote a book they started before). Unlike levels they never start again. Each year is bound as a **volume**: a table on the Quests page with the year in Roman numerals, its pages, books, the level reached and the quests done; the year going on says "so far". On a narrow screen the table scrolls sideways inside its own box, which can take the keyboard focus. `GET /api/legacy` works both out from the reader's progress.
 
 ### Books added by hand
 

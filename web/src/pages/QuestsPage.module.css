@@ -139,3 +139,65 @@
 .reward {
   font-style: italic;
 }
+
+/* Attributes: name and points, a bar to the next point, and what counts */
+
+.attributes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 14px 20px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attributeHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-caps);
+  font-size: 1.125rem; /* 18px */
+}
+
+.attributeValue {
+  font-family: var(--font-display);
+  font-size: 1.75rem; /* 28px */
+  line-height: 1;
+}
+
+.attributeFrom {
+  margin: 0;
+  font-size: 0.9375rem; /* 15px */
+  color: var(--muted);
+}
+
+/* Volumes: a table that scrolls sideways inside itself on narrow screens, never the page */
+
+.tableWrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.volumes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.0625rem; /* 17px */
+}
+
+.volumes th,
+.volumes td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ink);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.volumes thead th {
+  font-family: var(--font-caps);
+  border-bottom-width: 2px;
+}
+
+.volumes tbody th {
+  font-family: var(--font-caps);
+  letter-spacing: 0.04em;
+}
