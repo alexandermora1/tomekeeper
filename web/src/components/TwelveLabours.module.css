@@ -1,0 +1,143 @@
+.labours {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.wheel {
+  display: none;
+  width: 100%;
+  height: auto;
+}
+
+.wheel text {
+  text-anchor: middle;
+  fill: var(--ink);
+}
+
+.wheelName {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.wheelLabour {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-style: italic;
+  fill: var(--muted) !important;
+}
+
+.wheelPages {
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.hubTotal {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 700;
+}
+
+.hubOf {
+  font-family: var(--font-body);
+  font-size: 19px;
+}
+
+.hubPercent {
+  font-family: var(--font-caps);
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--accent) !important;
+}
+
+.today {
+  font-family: var(--font-caps);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Phones: the months as square boxes, three in a row (two on the narrowest screens) */
+
+.months {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 24rem) {
+  .months {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 1;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  background: var(--raised);
+  font-size: 0.9375rem; /* 15px */
+  line-height: 1.25;
+}
+
+.current {
+  background: var(--wash);
+}
+
+.future {
+  border-style: dashed;
+}
+
+.name {
+  font-family: var(--font-caps);
+  font-weight: 700;
+}
+
+.current .name {
+  color: var(--accent);
+}
+
+.labour {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.pages {
+  margin-top: auto;
+}
+
+.bar {
+  display: block;
+  height: 8px;
+  margin-top: 4px;
+  border: 1px solid var(--ink);
+  background: var(--page);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+}
+
+/* Wide screens: the wheel, with the month list kept for screen readers only */
+@media (min-width: 44rem) {
+  .wheel {
+    display: block;
+  }
+
+  .months {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}

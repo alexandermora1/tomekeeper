@@ -127,3 +127,10 @@
 .status:empty {
   margin: 0;
 }
+
+/* "Level 3, Novice · 1,234 XP this year" at the top of the reckoning */
+.level {
+  margin: 0 0 14px;
+  font-family: var(--font-caps);
+  font-size: 1.125rem; /* 18px */
+}

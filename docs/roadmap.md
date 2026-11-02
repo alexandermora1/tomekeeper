@@ -29,10 +29,19 @@ Tomekeeper is built in six stages. Each stage is split into steps small enough t
 | --- | --- | --- |
 | 3.1 | Logging progress on the book page: the page reached or a percentage, on the reader's own date; finishing (last page, "I've finished it", or moving to Finished); reading again; undoing the last entry. `readings` and `progress_entries` tables, `/api/shelves/{bookId}/progress`. Removing a book with logged pages asks first | Done |
 | 3.2 | The Chronicle dashboard: the Year's Reckoning (pages and books against the goal, pages a day to reach it) and quick logging for the books on Reading now. `GET /api/chronicle/{year}` | Done |
-| 3.3 | The Twelve Labours: pages per month, a wheel on wide screens and month boxes on phones | Next |
+| 3.3 | The Twelve Labours: pages per month, an SVG wheel with the sun in the hub on wide screens and month boxes on phones (the boxes stay for screen readers on wide screens) | Done |
+
+## Stage 4: The game
+
+Confirmed by Alex on 2 November 2026: the titles by level, the six quests with their gear, gear as medallions around the portrait.
+
+| Step | What | Status |
+| --- | --- | --- |
+| 4.1 | XP and levels: 1 XP per page, a quarter of a book's pages for finishing it, levels from 25 × (level − 1) × (level + 20) XP, starting again each January; titles Novice (1–4), Reader (5–9), Wayfarer (10–14), Scholar (15–19), Sage (20+). `GET /api/character/{year}`, the Quests page with level and titles, the level on the chronicle | Done |
+| 4.2 | Quests and gear: the six yearly quests (The Bookbinder, The Scholar, The Long Road, Five Decades, The Chronicler, The Long Nights), gear kept for good, medallions around the portrait | Next |
+| 4.3 | Attributes (Endurance, Wisdom, Imagination, Wanderlust: a point per 500 pages of each kind, kept across years) and volumes (each year bound when it ends) | |
 
 ## Later stages
 
-4. **The game:** XP and levels, quests, attributes, gear, volumes.
 5. **Fellowship:** profiles with "see your profile as", friends, reviews, block and report. Private by default.
 6. **Azure test month and showcase:** infrastructure as code (Bicep), a deploy workflow (with forwarded headers, so Google's redirect address uses https behind Azure), one month on Azure to prove it works end to end, privacy policy and accessibility statement, WCAG audit, README with screenshots, then the deployment comes down again.

@@ -1,0 +1,55 @@
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px 32px;
+  margin-top: 8px;
+}
+
+.portrait {
+  flex: none;
+}
+
+.frame {
+  flex: 1 1 420px;
+  min-width: 0;
+  max-width: 820px;
+}
+
+.xp {
+  margin: 0;
+  font-size: 1.125rem; /* 18px */
+}
+
+.rule {
+  margin: 12px 0 0;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.subheading {
+  margin: 24px 0 8px;
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+}
+
+.titles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.titles li {
+  padding: 4px 12px;
+  border: 1px solid var(--ink);
+}
+
+/* The reader's own title: ink filled, as in the 2c design */
+.titles .currentTitle {
+  border-width: 2px;
+  background: var(--ink);
+  color: var(--page);
+}

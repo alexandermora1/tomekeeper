@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Data;
+using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Shelves;
 
@@ -12,13 +13,15 @@ namespace Tomekeeper.Api.Progress;
 /// <param name="BooksFinished">Readings finished in the year, re-reads included.</param>
 /// <param name="PagesByMonth">Pages per month, January first: the Twelve Labours.</param>
 /// <param name="ReadingNow">The books on the Reading now shelf, latest first.</param>
+/// <param name="Character">XP and level for the year.</param>
 public sealed record ChronicleResponse(
     int Year,
     GoalResponse? Goal,
     int PagesRead,
     int BooksFinished,
     IReadOnlyList<int> PagesByMonth,
-    IReadOnlyList<ShelfEntryResponse> ReadingNow);
+    IReadOnlyList<ShelfEntryResponse> ReadingNow,
+    CharacterResponse Character);
 
 /// <summary>The reader's year at a glance, for the chronicle page: GET /api/chronicle/{year}.</summary>
 public static class ChronicleEndpoints
@@ -51,7 +54,8 @@ public static class ChronicleEndpoints
             .ToListAsync(cancellationToken);
         var readingNow = await ShelfEntryResponses.BuildAsync(db, userId, reading.Select(e => (e, e.Book)).ToList(), cancellationToken);
 
+        var character = await CharacterSheet.ForYearAsync(db, userId, year, cancellationToken);
         return TypedResults.Ok(new ChronicleResponse(
-            year, goal is null ? null : GoalResponse.From(goal), pagesByMonth.Sum(), finished, pagesByMonth, readingNow));
+            year, goal is null ? null : GoalResponse.From(goal), pagesByMonth.Sum(), finished, pagesByMonth, readingNow, character));
     }
 }

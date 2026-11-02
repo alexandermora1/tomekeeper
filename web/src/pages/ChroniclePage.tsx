@@ -14,6 +14,7 @@ import { TextField } from '../components/forms/TextField';
 import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
 import { Portrait } from '../components/Portrait';
+import { TwelveLabours } from '../components/TwelveLabours';
 import { describeGoal, parseWholeNumber } from '../goals/goalText';
 import { usePageTitle } from '../routing/usePageTitle';
 import { useSession } from '../session/sessionContext';
@@ -24,7 +25,7 @@ const count = (n: number, noun: string) => `${numberFormat.format(n)} ${noun}${n
 
 /**
  * The home page for signed-in readers: the Year's Reckoning against the goal, and the books on Reading now
- * with a quick way to log a page. (The Twelve Labours come in 3.3, quests in stage 4.)
+ * with a quick way to log a page, and the Twelve Labours: the pages of each month. (Quests come in stage 4.)
  */
 export function ChroniclePage() {
   usePageTitle('Your chronicle');
@@ -72,16 +73,33 @@ export function ChroniclePage() {
         </div>
       </Frame>
 
+      {data && (
+        <Frame title="The Twelve Labours" className={styles.frame}>
+          <TwelveLabours
+            year={data.year}
+            pagesByMonth={data.pagesByMonth}
+            pagesRead={data.pagesRead}
+            goalPages={data.goal?.pages ?? null}
+          />
+        </Frame>
+      )}
+
       {data && <ReadingNow entries={data.readingNow} onLogged={load} />}
     </Layout>
   );
 }
 
 function Reckoning({ data }: { data: Chronicle }) {
-  const { goal, year } = data;
+  const { goal, year, character } = data;
   const thisYear = year === new Date().getFullYear();
   return (
     <>
+      <p className={styles.level}>
+        <Link to="/quests">
+          Level {character.level}, {character.title}
+        </Link>{' '}
+        · {numberFormat.format(character.xp)} XP this year
+      </p>
       {goal?.pages != null && (
         <Tally heading="Pages" read={data.pagesRead} target={goal.pages} noun="page" bar="pages" pace={thisYear} />
       )}

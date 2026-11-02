@@ -1,3 +1,4 @@
+import type { Character } from './character';
 import { apiRequest } from './client';
 import type { Goal } from './goals';
 import type { ShelfEntry } from './shelves';
@@ -14,6 +15,8 @@ export interface Chronicle {
   pagesByMonth: number[];
   /** The books on Reading now, latest first. */
   readingNow: ShelfEntry[];
+  /** XP and level for the year. */
+  character: Character;
 }
 
 export const chronicle = {

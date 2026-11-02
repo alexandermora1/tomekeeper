@@ -7,6 +7,7 @@ import { FirstStepsPage } from './pages/FirstStepsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LibraryPage } from './pages/LibraryPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { QuestsPage } from './pages/QuestsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignInPage } from './pages/SignInPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -65,6 +66,14 @@ export function App() {
             element={
               <RequireReader>
                 <BookPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/quests"
+            element={
+              <RequireReader>
+                <QuestsPage />
               </RequireReader>
             }
           />

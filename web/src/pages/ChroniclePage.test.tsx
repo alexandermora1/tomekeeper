@@ -23,6 +23,7 @@ const year = (changes: Partial<Chronicle> = {}): Chronicle => ({
   booksFinished: 3,
   pagesByMonth: Array(12).fill(0),
   readingNow: [dune],
+  character: { year: YEAR, xp: 1650, pagesXp: 1500, finishXp: 150, level: 3, title: 'Novice', levelStartsAt: 1150, nextLevelAt: 1800, titles: [] },
   ...changes,
 });
 
@@ -41,6 +42,8 @@ describe('the chronicle', () => {
     expect(reckoning).toHaveTextContent('3 of 12 books (25%)');
     expect(reckoning).toHaveTextContent('a day from today reaches your goal.');
     expect(reckoning).toHaveTextContent(`Your goal for ${YEAR}: 6,000 pages and 12 books by 31 December.`);
+    expect(within(reckoning).getByRole('link', { name: 'Level 3, Novice' })).toHaveAttribute('href', '/quests');
+    expect(reckoning).toHaveTextContent('1,650 XP this year');
   });
 
   it('counts the year and offers a goal when there is none', async () => {

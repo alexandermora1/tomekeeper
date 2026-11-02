@@ -44,7 +44,8 @@ describe('the first steps page', () => {
     fakeApi.on('GET', `/api/goals/${YEAR}`, { status: 200, body: { year: YEAR, pages: 2000, books: 7 } });
     fakeApi.on('GET', `/api/chronicle/${YEAR}`, {
       status: 200,
-      body: { year: YEAR, goal: { year: YEAR, pages: 2000, books: 7 }, pagesRead: 0, booksFinished: 0, pagesByMonth: [], readingNow: [] },
+      body: { year: YEAR, goal: { year: YEAR, pages: 2000, books: 7 }, pagesRead: 0, booksFinished: 0, pagesByMonth: [], readingNow: [],
+        character: { year: YEAR, xp: 0, pagesXp: 0, finishXp: 0, level: 1, title: 'Novice', levelStartsAt: 0, nextLevelAt: 550, titles: [] } },
     });
     await user.click(screen.getByRole('link', { name: 'Go to your chronicle' }));
     expect(await screen.findByText('2,000 pages and 7 books')).toBeInTheDocument();

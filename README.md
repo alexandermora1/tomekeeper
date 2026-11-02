@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is under way: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, has begun: XP, levels and titles. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -128,7 +128,15 @@ Tables: `readings` (one time through a book: started and finished dates and the 
 
 The home page (`/`) shows **The Year's Reckoning**: pages read and books finished this year against the goal, with bars (red for pages, blue for books, as in the 2c design), and how many pages a day from today reach the goal. Whatever the goal doesn't count is still shown ("1 book finished so far."). Below it, **Reading now** lists the books on that shelf with a quick "Page reached" field each; the reckoning updates at once. A book finished from there leaves the list, and the focus goes to the list's heading.
 
+**The Twelve Labours** show the pages of each month, named after the labours of medieval calendars (Feasting, By the fire, Pruning…). On screens wider than 44rem the year is a wheel, drawn in SVG from the 2c design, with the gold 1556 sun and the year's total in the hub and a pointer at today; each month's ring fills towards a twelfth of the goal. On phones the months are square boxes in a grid. The boxes are the same information as an ordered list, so on wide screens they stay in the page for screen readers (visually hidden) while the wheel, only a picture of them, is hidden from screen readers. This month is marked with `aria-current="date"`, and months to come are dashed.
+
 `GET /api/chronicle/{year}` answers with the goal, pages read and books finished in the year (by the reader's own dates), pages per month (for the Twelve Labours in 3.3) and the books on Reading now.
+
+### The game: XP, levels and titles
+
+Readers earn 1 XP per page they log, and a quarter of a book's pages when they finish it. The XP needed for a level is 25 × (level − 1) × (level + 20), so each level costs a little more than the one before: level 2 at 550 XP (about two books), 10 at 6,750, 15 at 12,250 and 20 at 19,000, which takes a year of very keen reading. Levels are the same for everyone and start again each 1 January. The titles are Novice (levels 1 to 4), Reader (5 to 9), Wayfarer (10 to 14), Scholar (15 to 19) and Sage (20 and up).
+
+The Quests page (`/quests`) shows "Alex the Wayfarer", the year as a volume in Roman numerals, the XP with a bar to the next level and the titles; the chronicle shows the level and links there. `GET /api/character/{year}` counts the XP from the reader's progress, so nothing new is stored. The rules live in `Game/Levels.cs`.
 
 ### Books added by hand
 

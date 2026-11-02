@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
 using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Data;
+using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
@@ -153,6 +154,7 @@ app.MapCoverEndpoints();
 app.MapShelfEndpoints();
 app.MapProgressEndpoints();
 app.MapChronicleEndpoints();
+app.MapCharacterEndpoints();
 
 app.Run();
 

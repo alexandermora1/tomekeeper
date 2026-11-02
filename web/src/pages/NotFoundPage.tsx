@@ -10,8 +10,8 @@ export function NotFoundPage() {
       <div className={styles.page}>
         <h1 className={styles.title}>Page not found</h1>
         <p>
-          There is no page at this address. If you typed it, check that it is right. Some pages aren't built yet: quests,
-          fellowship and profile come later.
+          There is no page at this address. If you typed it, check that it is right. Some pages aren't built yet: fellowship and
+          profile come later.
         </p>
         <p>
           <Link to="/">Go to your chronicle</Link>
