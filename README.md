@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is done: profiles, friends, reviews with stars, blocking and reporting. Stage 6, a month on Azure and the showcase, comes next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is done: profiles, friends, reviews with stars, blocking and reporting. Stage 6, a month on Azure and the showcase, is under way: the app is ready to run on Azure App Service. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -262,6 +262,23 @@ curl -i -c cookies.txt -H "Content-Type: application/json" -H "X-Tomekeeper-Requ
 
 curl -b cookies.txt http://localhost:5080/api/account/me
 ```
+
+## Running on Azure
+
+For the test month the whole site runs as one Azure App Service: the API serves the built front-end from the same address, so the sign-in cookie, the request header check and the Content Security Policy work as they do locally. Publishing builds `web/` and copies `web/dist` into `api/Tomekeeper.Api/wwwroot` (ignored by git) before `dotnet publish`. The API then:
+
+- serves the front-end's files, with `no-cache` on `index.html` and a year's caching for the hashed files under `/assets`, and answers every other address that isn't an API call with `index.html`, so React Router can show `/library` or `/readers/alex`. Unknown `/api/…` addresses stay a JSON 404.
+- sends `frame-ancestors 'none'` as a header with the pages (the rest of their policy is the meta tag from the build), and HSTS outside development.
+
+Settings for Azure (App Service app settings; the infrastructure in stage 6.2 sets them):
+
+- `App:BehindProxy=true`: App Service ends HTTPS in front of the app. The API then trusts `X-Forwarded-Proto` and `X-Forwarded-For` from the last proxy, so cookies are secure, rate limits count per reader and Google's redirect address is `https://`.
+- `Database:MigrateOnStartup=true`: applies database migrations when the app starts (one instance; a deploy restarts it).
+- `DataProtection:KeysPath`: a folder that survives restarts (on App Service, under `/home`), for the keys that protect sign-in cookies.
+- `Email:AzureConnectionString` and `Email:Sender`: emails go through Azure Communication Services. Outside development, without them, emails aren't sent and a warning is logged. A failed send is logged without addresses or links, and the request goes on.
+- `ConnectionStrings:Tomekeeper`, `App:PublicUrl` and `App:ModeratorEmail`, as described above.
+
+To try the published shape locally: build the front-end, copy `web/dist` to `api/Tomekeeper.Api/wwwroot`, and run the API with `ASPNETCORE_ENVIRONMENT=Production`, a connection string and `App:PublicUrl=http://localhost:5080`. The whole site is then on http://localhost:5080.
 
 ## Tests
 

@@ -52,6 +52,19 @@ Confirmed by Alex on 2 November 2026: reviews with 1 to 5 stars, readers found b
 | 5.3 | Reviews with 1 to 5 stars on book pages and profiles; The Chronicler quest counts them | Done |
 | 5.4 | Blocking (hidden both ways, undone from the Fellowship page) and reporting a reader or a review (stored with a copy of what was reported, and emailed to `App:ModeratorEmail`) | Done |
 
-## Later stages
+## Stage 6: Azure test month and showcase
+
+Decided by Alex on 3 November 2026: one App Service for the site and the API, in Norway East, with Azure Communication Services for email.
+
+| Step | What | Status |
+| --- | --- | --- |
+| 6.1 | Ready for App Service: the API serves the built front-end with a fallback to `index.html`, forwarded headers behind the proxy, HSTS, migrations on start, kept sign-in keys, email through Azure Communication Services | Done |
+| 6.2 | Infrastructure as code (Bicep): App Service (F1), PostgreSQL Flexible Server (B1ms), Communication Services with an Azure-managed email domain, a budget alert | Next |
+| 6.3 | Deploy workflow (GitHub Actions, signing in to Azure with OIDC), a step-by-step guide, and the month on Azure | |
+| 6.4 | Privacy policy and accessibility statement | |
+| 6.5 | WCAG audit | |
+| 6.6 | README with screenshots and a recording, then the deployment comes down | |
+
+## Earlier plan for stage 6
 
 6. **Azure test month and showcase:** infrastructure as code (Bicep), a deploy workflow (with forwarded headers, so Google's redirect address uses https behind Azure), one month on Azure to prove it works end to end, privacy policy (including what reports keep, and who reads them) and accessibility statement, WCAG audit, README with screenshots, then the deployment comes down again.

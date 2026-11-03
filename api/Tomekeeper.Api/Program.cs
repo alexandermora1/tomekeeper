@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Tomekeeper.Api.Accounts;
@@ -16,6 +17,16 @@ using Tomekeeper.Api.Security;
 using Tomekeeper.Api.Shelves;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// On Azure App Service: behind its HTTPS proxy (Security/SiteHosting.cs).
+builder.AddProxySupport();
+
+// The keys that protect sign-in cookies. Kept in a folder that survives restarts when DataProtection:KeysPath
+// is set (on App Service, under /home), so readers stay signed in when the app restarts.
+if (builder.Configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath)
+{
+    builder.Services.AddDataProtection().SetApplicationName("Tomekeeper").PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+}
 
 // Database. The connection string is read when the database is first used, so tests can swap it.
 // Locally it comes from appsettings.Development.json (the Docker Compose database);
@@ -83,9 +94,15 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddOptions<AppOptions>().BindConfiguration(AppOptions.Section).ValidateDataAnnotations().ValidateOnStart();
 builder.Services.AddSingleton<AccountLinks>();
+// Emails: to the log in development, through Azure Communication Services when it is set up, otherwise not at all.
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.Section));
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddSingleton<IAccountEmailSender, LoggingEmailSender>();
+}
+else if (builder.Configuration.GetSection(EmailOptions.Section).Get<EmailOptions>() is { Configured: true })
+{
+    builder.Services.AddSingleton<IAccountEmailSender, AzureEmailSender>();
 }
 else
 {
@@ -135,14 +152,22 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// Creates the database and applies migrations: in development, so `dotnet run` works right after
+// `docker compose up`, and on Azure (Database:MigrateOnStartup), where one instance runs and a deploy restarts it.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
-    // Creates the database and applies migrations, so `dotnet run` works right after `docker compose up`.
     await using var scope = app.Services.CreateAsyncScope();
     await scope.ServiceProvider.GetRequiredService<TomekeeperDbContext>().Database.MigrateAsync();
 }
 
+app.UseProxySupport();
+if (!app.Environment.IsDevelopment())
+{
+    // Browsers that have been here over HTTPS use only HTTPS for a year.
+    app.UseHsts();
+}
 app.UseSecurityHeaders();
+app.UseFrontEnd();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseRequestHeaderGuard();
@@ -165,6 +190,7 @@ app.MapProfileEndpoints();
 app.MapFellowshipEndpoints();
 app.MapReviewEndpoints();
 app.MapReportEndpoints();
+app.MapFrontEndFallback();
 
 app.Run();
 
