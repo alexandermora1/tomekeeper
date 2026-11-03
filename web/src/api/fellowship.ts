@@ -1,8 +1,11 @@
 import type { PortraitId } from './account';
 import { apiRequest } from './client';
 
-/** How the signed-in reader stands with another: "asked" means you asked them, "asksYou" that they asked you. */
-export type Relation = 'you' | 'friend' | 'asked' | 'asksYou' | 'none';
+/**
+ * How the signed-in reader stands with another: "asked" means you asked them, "asksYou" that they asked you,
+ * "blocked" that you blocked them.
+ */
+export type Relation = 'you' | 'friend' | 'asked' | 'asksYou' | 'blocked' | 'none';
 
 /** Another reader, as a line in a list. */
 export interface ReaderCard {
@@ -20,6 +23,8 @@ export interface FellowshipLists {
   askingYou: ReaderCard[];
   /** Your requests that are still open, newest first. */
   youAsked: ReaderCard[];
+  /** Readers you have blocked, newest first. */
+  blocked: ReaderCard[];
 }
 
 const path = (handle: string) => `/api/fellowship/${encodeURIComponent(handle)}`;
@@ -36,4 +41,7 @@ export const fellowship = {
   ignore: (handle: string) => relation('POST', `${path(handle)}/ignore`),
   /** Withdraws your request, or ends the friendship. */
   leave: (handle: string) => relation('DELETE', path(handle)),
+  /** Ends any friendship or requests, and hides the two of you from each other. They aren't told. */
+  block: (handle: string) => relation('POST', `${path(handle)}/block`),
+  unblock: (handle: string) => relation('DELETE', `${path(handle)}/block`),
 };

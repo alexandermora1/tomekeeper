@@ -8,6 +8,7 @@ using Tomekeeper.Api.Goals;
 using Tomekeeper.Api.Health;
 using Tomekeeper.Api.Passwords;
 using Tomekeeper.Api.Fellowship;
+using Tomekeeper.Api.Moderation;
 using Tomekeeper.Api.Profiles;
 using Tomekeeper.Api.Reviews;
 using Tomekeeper.Api.Progress;
@@ -163,6 +164,7 @@ app.MapLegacyEndpoints();
 app.MapProfileEndpoints();
 app.MapFellowshipEndpoints();
 app.MapReviewEndpoints();
+app.MapReportEndpoints();
 
 app.Run();
 

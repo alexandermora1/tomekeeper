@@ -6,6 +6,7 @@ using Tomekeeper.Api.Books;
 using Tomekeeper.Api.Fellowship;
 using Tomekeeper.Api.Game;
 using Tomekeeper.Api.Goals;
+using Tomekeeper.Api.Moderation;
 using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Reviews;
 using Tomekeeper.Api.Shelves;
@@ -15,7 +16,7 @@ namespace Tomekeeper.Api.Data;
 /// <summary>
 /// The database. Table and column names are snake_case, as is usual in PostgreSQL.
 /// IdentityUserContext gives accounts without roles: users, user_claims, user_logins (Google, from step 1.4)
-/// and user_tokens. Our own tables: reading goals, books, shelves, progress, gear, friend requests, friendships and reviews.
+/// and user_tokens. Our own tables: reading goals, books, shelves, progress, gear, friend requests, friendships, reviews, blocks and reports.
 /// </summary>
 public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> options)
     : IdentityUserContext<User, Guid>(options)
@@ -37,6 +38,10 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
     public DbSet<Friendship> Friendships => Set<Friendship>();
 
     public DbSet<Review> Reviews => Set<Review>();
+
+    public DbSet<Block> Blocks => Set<Block>();
+
+    public DbSet<Report> Reports => Set<Report>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -179,6 +184,30 @@ public sealed class TomekeeperDbContext(DbContextOptions<TomekeeperDbContext> op
             // Reviews of a book, newest first; a reader's reviews for their profile and The Chronicler.
             review.HasIndex(r => new { r.BookId, r.WrittenAt });
             review.HasIndex(r => new { r.UserId, r.WrittenAt });
+        });
+
+        builder.Entity<Block>(block =>
+        {
+            block.ToTable("blocks", table => table.HasCheckConstraint("ck_blocks_not_self", "blocker_id <> blocked_id"));
+            block.HasKey(b => new { b.BlockerId, b.BlockedId });
+            block.HasOne<User>().WithMany().HasForeignKey(b => b.BlockerId).OnDelete(DeleteBehavior.Cascade);
+            block.HasOne<User>().WithMany().HasForeignKey(b => b.BlockedId).OnDelete(DeleteBehavior.Cascade);
+            // Looked up from both sides.
+            block.HasIndex(b => b.BlockedId);
+        });
+
+        builder.Entity<Report>(report =>
+        {
+            report.ToTable("reports");
+            report.Property(r => r.Reason).HasConversion<string>().HasMaxLength(20);
+            report.Property(r => r.Details).HasMaxLength(Report.MaxDetailsLength);
+            report.Property(r => r.Snapshot).HasMaxLength(Report.MaxSnapshotLength);
+            // A report goes with either account, so nothing about a reader stays after they leave.
+            report.HasOne<User>().WithMany().HasForeignKey(r => r.ReporterId).OnDelete(DeleteBehavior.Cascade);
+            report.HasOne<User>().WithMany().HasForeignKey(r => r.ReportedId).OnDelete(DeleteBehavior.Cascade);
+            // How many reports a reader has sent lately.
+            report.HasIndex(r => new { r.ReporterId, r.CreatedAt });
+            report.HasIndex(r => r.ReportedId);
         });
     }
 }

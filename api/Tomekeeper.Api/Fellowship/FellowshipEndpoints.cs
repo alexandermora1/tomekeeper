@@ -10,8 +10,8 @@ namespace Tomekeeper.Api.Fellowship;
 
 /// <summary>Another reader, as a line in a list.</summary>
 /// <param name="Relation">
-/// How the signed-in reader stands with them: "you", "friend", "asked" (you asked them), "asksYou" (they asked you)
-/// or "none".
+/// How the signed-in reader stands with them: "you", "friend", "asked" (you asked them), "asksYou" (they asked you),
+/// "blocked" (you blocked them) or "none".
 /// </param>
 /// <param name="Since">When they became friends, or when the request was sent; null in search results.</param>
 public sealed record ReaderCard(string Handle, string DisplayName, string? Portrait, string Relation, DateTimeOffset? Since);
@@ -21,7 +21,9 @@ public sealed record ReaderSearchResponse(IReadOnlyList<ReaderCard> Readers);
 /// <param name="Friends">By name.</param>
 /// <param name="AskingYou">Requests to the reader they haven't answered or ignored, newest first.</param>
 /// <param name="YouAsked">Requests the reader sent that are still open, newest first.</param>
-public sealed record FellowshipResponse(IReadOnlyList<ReaderCard> Friends, IReadOnlyList<ReaderCard> AskingYou, IReadOnlyList<ReaderCard> YouAsked);
+/// <param name="Blocked">Readers this reader has blocked, newest first.</param>
+public sealed record FellowshipResponse(
+    IReadOnlyList<ReaderCard> Friends, IReadOnlyList<ReaderCard> AskingYou, IReadOnlyList<ReaderCard> YouAsked, IReadOnlyList<ReaderCard> Blocked);
 
 public sealed record RelationResponse(string Relation);
 
@@ -42,6 +44,8 @@ public static class FellowshipEndpoints
         fellowship.MapPost("/{handle}/ignore", Ignore);
         // Withdraws the reader's request, or ends the friendship.
         fellowship.MapDelete("/{handle}", Leave);
+        fellowship.MapPost("/{handle}/block", BlockReader);
+        fellowship.MapDelete("/{handle}/block", Unblock);
     }
 
     /// <summary>Readers whose name contains the words typed, or whose address contains them in plain letters.</summary>
@@ -55,7 +59,7 @@ public static class FellowshipEndpoints
         var me = principal.GetUserId();
         var pattern = "%" + typed.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%";
         var plain = Handles.Plain(typed);
-        var found = await db.Users
+        var found = await db.Users.NotHiddenFrom(db, me)
             .Where(u => u.Id != me && (EF.Functions.ILike(u.DisplayName, pattern, @"\") || (plain.Length >= 2 && u.Handle != null && u.Handle.Contains(plain))))
             .OrderBy(u => u.Handle == plain ? 0 : 1)
             .ThenBy(u => u.DisplayName)
@@ -76,10 +80,15 @@ public static class FellowshipEndpoints
             .Join(db.Users, r => r.ToId, u => u.Id, (r, u) => new { u, r.SentAt })
             .OrderByDescending(x => x.SentAt)
             .ToListAsync(cancellationToken);
+        var blocked = await db.Blocks.Where(b => b.BlockerId == me)
+            .Join(db.Users, b => b.BlockedId, u => u.Id, (b, u) => new { u, b.BlockedAt })
+            .OrderByDescending(x => x.BlockedAt)
+            .ToListAsync(cancellationToken);
         return TypedResults.Ok(new FellowshipResponse(
             friends,
             await CardsAsync(db, me, askingYou.Select(x => (x.u, (DateTimeOffset?)x.SentAt)), cancellationToken),
-            await CardsAsync(db, me, youAsked.Select(x => (x.u, (DateTimeOffset?)x.SentAt)), cancellationToken)));
+            await CardsAsync(db, me, youAsked.Select(x => (x.u, (DateTimeOffset?)x.SentAt)), cancellationToken),
+            await CardsAsync(db, me, blocked.Select(x => (x.u, (DateTimeOffset?)x.BlockedAt)), cancellationToken)));
     }
 
     /// <summary>Asks to be friends. If the other reader has already asked, the two become friends at once.</summary>
@@ -88,7 +97,7 @@ public static class FellowshipEndpoints
     {
         var me = principal.GetUserId();
         var other = await FindAsync(db, handle, cancellationToken);
-        if (other is null) return TypedResults.NotFound();
+        if (other is null || await Blocks.BetweenAsync(db, me, other.Id, cancellationToken)) return TypedResults.NotFound();
         if (other.Id == me) return Problem("You can't ask yourself to be friends.");
         if (await AreFriendsAsync(db, me, other.Id, cancellationToken)) return Relation("friend");
 
@@ -118,7 +127,7 @@ public static class FellowshipEndpoints
     {
         var me = principal.GetUserId();
         var other = await FindAsync(db, handle, cancellationToken);
-        if (other is null) return TypedResults.NotFound();
+        if (other is null || await Blocks.BetweenAsync(db, me, other.Id, cancellationToken)) return TypedResults.NotFound();
         if (await AreFriendsAsync(db, me, other.Id, cancellationToken)) return Relation("friend");
         if (!await db.FriendRequests.AnyAsync(r => r.FromId == other.Id && r.ToId == me, cancellationToken))
         {
@@ -155,11 +164,51 @@ public static class FellowshipEndpoints
         return TypedResults.Ok(new RelationResponse("none"));
     }
 
+    /// <summary>Blocks a reader: ends any friendship and requests between the two, and hides each from the other.</summary>
+    private static async Task<Results<Ok<RelationResponse>, NotFound, ProblemHttpResult>> BlockReader(
+        string handle, ClaimsPrincipal principal, TomekeeperDbContext db, TimeProvider time, CancellationToken cancellationToken)
+    {
+        var me = principal.GetUserId();
+        var other = await FindAsync(db, handle, cancellationToken);
+        if (other is null) return TypedResults.NotFound();
+        if (other.Id == me) return Problem("You can't block yourself.");
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await db.Friendships.Where(f => (f.UserId == me && f.FriendId == other.Id) || (f.UserId == other.Id && f.FriendId == me))
+            .ExecuteDeleteAsync(cancellationToken);
+        await db.FriendRequests.Where(r => (r.FromId == me && r.ToId == other.Id) || (r.FromId == other.Id && r.ToId == me))
+            .ExecuteDeleteAsync(cancellationToken);
+        if (!await db.Blocks.AnyAsync(b => b.BlockerId == me && b.BlockedId == other.Id, cancellationToken))
+        {
+            db.Blocks.Add(new Block { BlockerId = me, BlockedId = other.Id, BlockedAt = Now(time) });
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+            {
+                // Blocked twice in the same moment.
+            }
+        }
+        await transaction.CommitAsync(cancellationToken);
+        return Relation("blocked");
+    }
+
+    private static async Task<Results<Ok<RelationResponse>, NotFound>> Unblock(
+        string handle, ClaimsPrincipal principal, TomekeeperDbContext db, CancellationToken cancellationToken)
+    {
+        var me = principal.GetUserId();
+        var other = await FindAsync(db, handle, cancellationToken);
+        if (other is null) return TypedResults.NotFound();
+        await db.Blocks.Where(b => b.BlockerId == me && b.BlockedId == other.Id).ExecuteDeleteAsync(cancellationToken);
+        return Relation("none");
+    }
+
     /// <summary>The friends of a reader, by name, with how the viewer stands with each.</summary>
     public static async Task<IReadOnlyList<ReaderCard>> FriendsOfAsync(TomekeeperDbContext db, Guid readerId, Guid viewerId, CancellationToken cancellationToken)
     {
         var friends = await db.Friendships.Where(f => f.UserId == readerId)
-            .Join(db.Users, f => f.FriendId, u => u.Id, (f, u) => new { u, f.Since })
+            .Join(db.Users.NotHiddenFrom(db, viewerId), f => f.FriendId, u => u.Id, (f, u) => new { u, f.Since })
             .OrderBy(x => x.u.DisplayName)
             .ToListAsync(cancellationToken);
         return await CardsAsync(db, viewerId, friends.Select(x => (x.u, (DateTimeOffset?)x.Since)), cancellationToken);
@@ -175,8 +224,9 @@ public static class FellowshipEndpoints
         var asked = await db.FriendRequests.Where(r => r.FromId == viewerId && ids.Contains(r.ToId)).Select(r => r.ToId).ToListAsync(cancellationToken);
         // An ignored request no longer shows for the reader who ignored it.
         var asksYou = await db.FriendRequests.Where(r => r.ToId == viewerId && r.IgnoredAt == null && ids.Contains(r.FromId)).Select(r => r.FromId).ToListAsync(cancellationToken);
+        var blocked = await db.Blocks.Where(b => b.BlockerId == viewerId && ids.Contains(b.BlockedId)).Select(b => b.BlockedId).ToListAsync(cancellationToken);
         return ids.Distinct().ToDictionary(id => id, id =>
-            id == viewerId ? "you" : friends.Contains(id) ? "friend" : asked.Contains(id) ? "asked" : asksYou.Contains(id) ? "asksYou" : "none");
+            id == viewerId ? "you" : blocked.Contains(id) ? "blocked" : friends.Contains(id) ? "friend" : asked.Contains(id) ? "asked" : asksYou.Contains(id) ? "asksYou" : "none");
     }
 
     /// <summary>The users must be tracked, so readers without an address yet can be given one.</summary>

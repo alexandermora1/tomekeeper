@@ -49,7 +49,7 @@ public static class ReviewEndpoints
             .ToListAsync(cancellationToken);
         // Shared with everyone, or with friends when the two are friends.
         var others = await db.Reviews.Where(r => r.BookId == bookId && r.UserId != me)
-            .Join(db.Users, r => r.UserId, u => u.Id, (r, u) => new { r, u })
+            .Join(db.Users.NotHiddenFrom(db, me), r => r.UserId, u => u.Id, (r, u) => new { r, u })
             .Where(x => x.u.ReviewsVisibleTo == Visibility.Everyone ||
                         (x.u.ReviewsVisibleTo == Visibility.Friends && db.Friendships.Any(f => f.UserId == me && f.FriendId == x.u.Id)))
             .OrderByDescending(x => x.r.WrittenAt)

@@ -1,40 +1,31 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router";
-import type { Book } from "../api/books";
-import {
-  reviews as reviewsApi,
-  type BookReviews as Reviews,
-  type Review,
-} from "../api/reviews";
-import { Button } from "../components/Button";
-import { ErrorSummary } from "../components/forms/ErrorSummary";
-import { Fieldset } from "../components/forms/Fieldset";
-import {
-  formErrorsFrom,
-  noErrors,
-  problemMessage,
-  type FormErrors,
-} from "../components/forms/formErrors";
-import formStyles from "../components/forms/forms.module.css";
-import { Frame } from "../components/Frame";
-import { Portrait } from "../components/Portrait";
-import { Stars } from "../components/Stars";
-import bookStyles from "./BookPage.module.css";
-import styles from "./BookReviews.module.css";
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
+import type { Book } from '../api/books';
+import { reviews as reviewsApi, type BookReviews as Reviews, type Review } from '../api/reviews';
+import { Button } from '../components/Button';
+import { ErrorSummary } from '../components/forms/ErrorSummary';
+import { Fieldset } from '../components/forms/Fieldset';
+import { formErrorsFrom, noErrors, problemMessage, type FormErrors } from '../components/forms/formErrors';
+import formStyles from '../components/forms/forms.module.css';
+import { Frame } from '../components/Frame';
+import { Portrait } from '../components/Portrait';
+import { Stars } from '../components/Stars';
+import bookStyles from './BookPage.module.css';
+import styles from './BookReviews.module.css';
 
-const numberFormat = new Intl.NumberFormat("en-GB");
-const dateFormat = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
+const numberFormat = new Intl.NumberFormat('en-GB');
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
 });
 const FIELDS = [
-  { name: "rating", id: "rating-1" },
-  { name: "text", id: "review-text" },
+  { name: 'rating', id: 'rating-1' },
+  { name: 'text', id: 'review-text' },
 ] as const;
-type Field = (typeof FIELDS)[number]["name"];
+type Field = (typeof FIELDS)[number]['name'];
 const TEXT_MAX = 5000;
-const HEADING_ID = "your-review";
+const HEADING_ID = 'your-review';
 
 interface BookReviewsProps {
   book: Book;
@@ -48,7 +39,7 @@ export function BookReviews({ book, shelved, onReviewed }: BookReviewsProps) {
   const [loaded, setLoaded] = useState<Reviews | undefined>();
   const [failed, setFailed] = useState<string | undefined>();
   const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     let current = true;
@@ -61,8 +52,7 @@ export function BookReviews({ book, shelved, onReviewed }: BookReviewsProps) {
     };
   }, [book.id]);
 
-  const focusHeading = () =>
-    requestAnimationFrame(() => document.getElementById(HEADING_ID)?.focus());
+  const focusHeading = () => requestAnimationFrame(() => document.getElementById(HEADING_ID)?.focus());
 
   function saved(review: Review | null, text: string) {
     setLoaded((now) => now && { ...now, mine: review });
@@ -82,16 +72,12 @@ export function BookReviews({ book, shelved, onReviewed }: BookReviewsProps) {
       <p role="status" className={bookStyles.status}>
         {message}
       </p>
-      {!shelved && !mine && (
-        <p className={styles.quiet}>
-          Put the book on one of your shelves to review it.
-        </p>
-      )}
+      {!shelved && !mine && <p className={styles.quiet}>Put the book on one of your shelves to review it.</p>}
       {loaded && shelved && (!mine || editing) && (
         <ReviewForm
           book={book}
           mine={mine}
-          onSaved={(review) => saved(review, "Review saved.")}
+          onSaved={(review) => saved(review, 'Review saved.')}
           onCancel={() => {
             setEditing(false);
             focusHeading();
@@ -103,21 +89,18 @@ export function BookReviews({ book, shelved, onReviewed }: BookReviewsProps) {
           book={book}
           review={mine}
           onEdit={() => {
-            setMessage("");
+            setMessage('');
             setEditing(true);
             focusHeading();
           }}
-          onDeleted={() => saved(null, "Review deleted.")}
+          onDeleted={() => saved(null, 'Review deleted.')}
         />
       )}
 
       <h3 className={styles.subheading}>Other readers</h3>
       {loaded &&
         (loaded.others.length === 0 ? (
-          <p className={styles.quiet}>
-            No reviews you can see yet. Readers share their reviews with friends
-            or with everyone.
-          </p>
+          <p className={styles.quiet}>No reviews you can see yet. Readers share their reviews with friends or with everyone.</p>
         ) : (
           <ul className={styles.list}>
             {loaded.others.map((review) => (
@@ -125,14 +108,15 @@ export function BookReviews({ book, shelved, onReviewed }: BookReviewsProps) {
                 <Portrait id={review.reader.portrait} size="tiny" />
                 <div className={styles.body}>
                   <p className={styles.by}>
-                    <Link to={`/readers/${review.reader.handle}`}>
-                      {review.reader.displayName}
-                    </Link>
-                    {review.reader.relation === "friend" && (
-                      <span className={styles.quiet}> · friend</span>
-                    )}
+                    <Link to={`/readers/${review.reader.handle}`}>{review.reader.displayName}</Link>
+                    {review.reader.relation === 'friend' && <span className={styles.quiet}> · friend</span>}
                   </p>
                   <ReviewText review={review} />
+                  <p className={styles.report}>
+                    <Link to={`/report/${review.reader.handle}?book=${book.id}`}>
+                      Report <span className="visually-hidden">review by {review.reader.displayName}</span>
+                    </Link>
+                  </p>
                 </div>
               </li>
             ))}
@@ -143,18 +127,14 @@ export function BookReviews({ book, shelved, onReviewed }: BookReviewsProps) {
 }
 
 /** Stars, the date and the words. */
-function ReviewText({
-  review,
-}: {
-  review: Pick<Review, "rating" | "text" | "writtenAt" | "editedAt">;
-}) {
+function ReviewText({ review }: { review: Pick<Review, 'rating' | 'text' | 'writtenAt' | 'editedAt'> }) {
   return (
     <>
       <p className={styles.meta}>
-        <Stars rating={review.rating} />{" "}
+        <Stars rating={review.rating} />{' '}
         <span className={styles.quiet}>
           {dateFormat.format(new Date(review.writtenAt))}
-          {review.editedAt && ", edited"}
+          {review.editedAt && ', edited'}
         </span>
       </p>
       {review.text && <p className={styles.text}>{review.text}</p>}
@@ -162,17 +142,7 @@ function ReviewText({
   );
 }
 
-function MyReview({
-  book,
-  review,
-  onEdit,
-  onDeleted,
-}: {
-  book: Book;
-  review: Review;
-  onEdit: () => void;
-  onDeleted: () => void;
-}) {
+function MyReview({ book, review, onEdit, onDeleted }: { book: Book; review: Review; onEdit: () => void; onDeleted: () => void }) {
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -198,12 +168,7 @@ function MyReview({
       <div className={styles.buttons}>
         {asking ? (
           <>
-            <Button
-              variant="danger"
-              aria-disabled={busy || undefined}
-              aria-describedby="delete-review-warning"
-              onClick={() => void remove()}
-            >
+            <Button variant="danger" aria-disabled={busy || undefined} aria-describedby="delete-review-warning" onClick={() => void remove()}>
               Yes, delete <span className="visually-hidden">your review</span>
             </Button>
             <Button variant="secondary" onClick={() => setAsking(false)}>
@@ -222,7 +187,7 @@ function MyReview({
         )}
       </div>
       <p id="delete-review-warning" role="status" className={styles.warning}>
-        {asking ? "Delete your review? The words can’t be brought back." : ""}
+        {asking ? 'Delete your review? The words can’t be brought back.' : ''}
       </p>
       {error && <p role="alert">{error}</p>}
     </div>
@@ -238,7 +203,7 @@ interface ReviewFormProps {
 
 function ReviewForm({ book, mine, onSaved, onCancel }: ReviewFormProps) {
   const [rating, setRating] = useState<number | null>(mine?.rating ?? null);
-  const [text, setText] = useState(mine?.text ?? "");
+  const [text, setText] = useState(mine?.text ?? '');
   const [errors, setErrors] = useState<FormErrors<Field>>(noErrors);
   const [pending, setPending] = useState(false);
 
@@ -247,7 +212,7 @@ function ReviewForm({ book, mine, onSaved, onCancel }: ReviewFormProps) {
     if (pending) return;
     if (rating === null) {
       const local = noErrors<Field>();
-      local.fields.rating = "Choose from 1 to 5 stars.";
+      local.fields.rating = 'Choose from 1 to 5 stars.';
       setErrors(local);
       return;
     }
@@ -266,11 +231,7 @@ function ReviewForm({ book, mine, onSaved, onCancel }: ReviewFormProps) {
   }
 
   return (
-    <form
-      noValidate
-      onSubmit={handleSubmit}
-      className={`${formStyles.form} ${styles.form}`}
-    >
+    <form noValidate onSubmit={handleSubmit} className={`${formStyles.form} ${styles.form}`}>
       <ErrorSummary errors={errors} fields={FIELDS} />
       <Fieldset legend="Your rating" error={errors.fields.rating}>
         <div className={styles.stars}>
@@ -286,22 +247,17 @@ function ReviewForm({ book, mine, onSaved, onCancel }: ReviewFormProps) {
                   onChange={() => setRating(n)}
                   className="visually-hidden"
                 />
-                <span
-                  aria-hidden="true"
-                  className={
-                    rating !== null && n <= rating ? styles.on : styles.off
-                  }
-                >
-                  {rating !== null && n <= rating ? "★" : "☆"}
+                <span aria-hidden="true" className={rating !== null && n <= rating ? styles.on : styles.off}>
+                  {rating !== null && n <= rating ? '★' : '☆'}
                 </span>
                 <span className="visually-hidden">
-                  {n} {n === 1 ? "star" : "stars"}
+                  {n} {n === 1 ? 'star' : 'stars'}
                 </span>
               </label>
             ))}
           </span>
           <span className={styles.chosen} aria-hidden="true">
-            {rating === null ? "Not chosen" : `${rating} of 5`}
+            {rating === null ? 'Not chosen' : `${rating} of 5`}
           </span>
         </div>
       </Fieldset>
@@ -310,9 +266,7 @@ function ReviewForm({ book, mine, onSaved, onCancel }: ReviewFormProps) {
           Your review (if you like)
         </label>
         <p id="review-text-hint" className={formStyles.hint}>
-          Stars alone are fine, but only reviews with words count for The
-          Chronicler. {numberFormat.format(TEXT_MAX - text.length)} characters
-          left.
+          Stars alone are fine, but only reviews with words count for The Chronicler. {numberFormat.format(TEXT_MAX - text.length)} characters left.
         </p>
         {errors.fields.text && (
           <p id="review-text-error" className={formStyles.error}>
@@ -325,22 +279,14 @@ function ReviewForm({ book, mine, onSaved, onCancel }: ReviewFormProps) {
           rows={6}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          className={
-            errors.fields.text
-              ? `${formStyles.input} ${formStyles.invalid}`
-              : formStyles.input
-          }
+          className={errors.fields.text ? `${formStyles.input} ${formStyles.invalid}` : formStyles.input}
           aria-invalid={errors.fields.text ? true : undefined}
-          aria-describedby={
-            errors.fields.text
-              ? "review-text-hint review-text-error"
-              : "review-text-hint"
-          }
+          aria-describedby={errors.fields.text ? 'review-text-hint review-text-error' : 'review-text-hint'}
         />
       </div>
       <div className={styles.buttons}>
         <Button type="submit" aria-disabled={pending || undefined}>
-          {pending ? "Saving…" : "Save review"}
+          {pending ? 'Saving…' : 'Save review'}
         </Button>
         {mine && (
           <Button variant="secondary" onClick={onCancel}>

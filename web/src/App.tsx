@@ -10,6 +10,7 @@ import { EditProfilePage } from './pages/EditProfilePage';
 import { FellowshipPage } from './pages/FellowshipPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ReportPage } from './pages/ReportPage';
 import { QuestsPage } from './pages/QuestsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignInPage } from './pages/SignInPage';
@@ -69,6 +70,14 @@ export function App() {
             element={
               <RequireReader>
                 <BookPage />
+              </RequireReader>
+            }
+          />
+          <Route
+            path="/report/:handle"
+            element={
+              <RequireReader>
+                <ReportPage />
               </RequireReader>
             }
           />

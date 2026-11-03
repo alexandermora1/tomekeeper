@@ -284,6 +284,7 @@ describe('reviews on the book page', () => {
     expect(within(reviews).getByRole('img', { name: '2 of 5 stars' })).toBeInTheDocument();
     expect(reviews).toHaveTextContent('20 October 2026, edited');
     expect(reviews).toHaveTextContent('Too long.');
+    expect(within(reviews).getByRole('link', { name: 'Report review by Tormod' })).toHaveAttribute('href', `/report/tormod?book=${ID}`);
     expect(reviews).toHaveTextContent('Put the book on one of your shelves to review it.');
     expect(within(reviews).queryByRole('button', { name: 'Save review' })).not.toBeInTheDocument();
   });

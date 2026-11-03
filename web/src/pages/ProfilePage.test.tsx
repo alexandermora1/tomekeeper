@@ -151,6 +151,27 @@ describe('the profile page', () => {
     expect(screen.getByText('Not in your fellowship.')).toBeInTheDocument();
   });
 
+  it('blocks another reader after asking, and links to reporting them', async () => {
+    const user = userEvent.setup();
+    fakeApi.on('GET', '/api/readers/tormod', { status: 200, body: { ...asStranger, handle: 'tormod', displayName: 'Tormod', isOwner: false, relation: 'none' } });
+    fakeApi.on('POST', '/api/fellowship/tormod/block', { status: 200, body: { relation: 'blocked' } });
+    renderApp('/readers/tormod');
+
+    expect(await screen.findByRole('link', { name: 'Report Tormod' })).toHaveAttribute('href', '/report/tormod');
+    await user.click(screen.getByRole('button', { name: 'Block Tormod' }));
+    const question = screen.getByText(/^Block Tormod\? You won’t see each other’s profiles/);
+    await vi.waitFor(() => expect(question).toHaveFocus());
+    expect(fakeApi.sent('POST', '/api/fellowship/tormod/block')).toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: 'Yes, block Tormod' }));
+
+    const heading = await screen.findByRole('heading', { level: 1, name: 'You blocked Tormod' });
+    await vi.waitFor(() => expect(heading).toHaveFocus());
+    expect(screen.getByRole('link', { name: 'Fellowship page' })).toHaveAttribute('href', '/fellowship');
+    expect(screen.queryByRole('region', { name: 'Reading now' })).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(document.title).toBe('You blocked Tormod – Tomekeeper'));
+  });
+
   it('asks another reader to be friends from their profile', async () => {
     const user = userEvent.setup();
     const tormod = { ...asStranger, handle: 'tormod', displayName: 'Tormod', isOwner: false };

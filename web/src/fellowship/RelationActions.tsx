@@ -77,6 +77,11 @@ export function RelationActions({ handle, name, relation, idPrefix, onChanged, f
             </Button>
           </>
         )}
+        {relation === 'blocked' && (
+          <Button variant="secondary" aria-disabled={disabled} onClick={() => void act(() => fellowship.unblock(handle), () => `You unblocked ${name}.`)}>
+            Unblock <span className="visually-hidden">{name}</span>
+          </Button>
+        )}
         {relation === 'friend' && !confirming && (
           <Button
             variant="secondary"
@@ -120,4 +125,5 @@ const LINES: Record<Exclude<Relation, 'you'>, (name: string) => string> = {
   asked: (name) => `You asked ${name} to be friends.`,
   asksYou: (name) => `${name} asks to be your friend.`,
   friend: (name) => `${name} is in your fellowship.`,
+  blocked: (name) => `You blocked ${name}. You don’t see each other.`,
 };

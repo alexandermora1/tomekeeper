@@ -10,6 +10,7 @@ import { Layout } from '../components/Layout';
 import { Notice } from '../components/Notice';
 import { Portrait } from '../components/Portrait';
 import { Stars } from '../components/Stars';
+import { BlockAndReport } from '../fellowship/BlockAndReport';
 import { RelationActions } from '../fellowship/RelationActions';
 import { toRoman } from '../game/roman';
 import { usePageTitle } from '../routing/usePageTitle';
@@ -50,7 +51,13 @@ export function ProfilePage() {
   const [failed, setFailed] = useState<string | undefined>();
   // Fetched again after becoming friends (or no longer), since that changes what can be seen.
   const [version, setVersion] = useState(0);
-  usePageTitle(data ? data.displayName : data === null ? 'Reader not found' : 'Profile');
+  // The name of a reader just blocked from this page: the profile gives way to a note.
+  const [blocked, setBlocked] = useState<string | undefined>();
+  // The Block button is gone, so the focus goes to the heading that replaces the profile, once it is drawn.
+  useEffect(() => {
+    if (blocked) document.getElementById('blocked-heading')?.focus();
+  }, [blocked]);
+  usePageTitle(blocked ? `You blocked ${blocked}` : data ? data.displayName : data === null ? 'Reader not found' : 'Profile');
 
   // Your own profile: find your address first.
   useEffect(() => {
@@ -87,13 +94,29 @@ export function ProfilePage() {
   return (
     <Layout current={routeHandle ? null : 'profile'}>
       {failed && <p>{failed}</p>}
-      {data === null && (
+      {blocked && (
+        <>
+          <h1 id="blocked-heading" tabIndex={-1} className={chronicleStyles.title}>
+            You blocked {blocked}
+          </h1>
+          <p className={styles.bio}>
+            You won’t see each other on Tomekeeper, and {blocked} isn’t told. To undo it, go to the{' '}
+            <Link to="/fellowship">Fellowship page</Link>.
+          </p>
+          {handle && (
+            <p>
+              <Link to={`/report/${handle}`}>Report {blocked} to the moderator</Link>
+            </p>
+          )}
+        </>
+      )}
+      {!blocked && data === null && (
         <>
           <h1 className={chronicleStyles.title}>Reader not found</h1>
           <p>There is no reader at this address. Check the link, or find readers on the Fellowship page.</p>
         </>
       )}
-      {data && (
+      {!blocked && data && (
         <>
           {data.isOwner && (
             <div className={styles.viewAs}>
@@ -116,6 +139,7 @@ export function ProfilePage() {
             data={data}
             onSettings={(visibility) => setData({ ...data, visibility })}
             onRelation={() => setVersion((n) => n + 1)}
+            onBlocked={() => setBlocked(data.displayName)}
           />
         </>
       )}
@@ -127,9 +151,10 @@ interface ProfileViewProps {
   data: ReaderProfile;
   onSettings: (settings: VisibilitySettings) => void;
   onRelation: () => void;
+  onBlocked: () => void;
 }
 
-function ProfileView({ data, onSettings, onRelation }: ProfileViewProps) {
+function ProfileView({ data, onSettings, onRelation, onBlocked }: ProfileViewProps) {
   const own = data.viewedAs === 'you';
   const badge = (part: keyof VisibilitySettings) =>
     own && data.visibility ? <p className={styles.badge}>Visible to: {VISIBILITY_NAMES[data.visibility[part]]}</p> : null;
@@ -161,6 +186,7 @@ function ProfileView({ data, onSettings, onRelation }: ProfileViewProps) {
               onChanged={onRelation}
             />
           )}
+          {!data.isOwner && <BlockAndReport handle={data.handle} name={data.displayName} onBlocked={onBlocked} />}
         </div>
       </div>
 

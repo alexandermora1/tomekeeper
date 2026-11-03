@@ -41,7 +41,7 @@ export interface ReaderProfile {
   /** For the owner only. */
   visibility: VisibilitySettings | null;
   /** How you stand with the reader; null on your own profile. */
-  relation: Exclude<Relation, 'you'> | null;
+  relation: Exclude<Relation, 'you' | 'blocked'> | null;
   /** The reader's friends, when you may see them. */
   fellowship: ReaderCard[] | null;
   /** The reader's latest reviews, when you may see them. */

@@ -115,6 +115,11 @@
   margin: 4px 0 0;
 }
 
+.report {
+  margin: 6px 0 0;
+  font-size: 0.9375rem; /* 15px */
+}
+
 .text {
   max-width: 68ch;
   margin: 8px 0 0;

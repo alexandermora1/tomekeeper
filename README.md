@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is under way: profiles, friends and reviews are in; blocking and reporting come next. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is done: profiles, friends, reviews with stars, blocking and reporting. Stage 6, a month on Azure and the showcase, comes next. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -191,6 +191,18 @@ The book page also shows other readers' reviews that this reader may see: those 
 | `GET /reviews` | The reader's own review (`mine`) and the others they may see, newest first |
 | `PUT /review` | Writes or changes the reader's review: `rating` 1 to 5 and `text` (409 if the book isn't on their shelves) |
 | `DELETE /review` | Deletes it |
+
+### Blocking and reports
+
+On another reader's profile there are **Report** and **Block** buttons. Blocking asks first, then ends any friendship or requests between the two and hides each from the other: profiles (404), search, reviews on book pages and friends lists on other profiles. The blocked reader isn't told, and only the reader who blocked can undo it, from the **Blocked readers** list on the Fellowship page. Blocks are in the `blocks` table.
+
+Readers can report another reader, or one of their reviews (the **Report** link under each review), on `/report/{handle}` (with `?book={id}` for a review): what is wrong (spam or advertising, harassment or bullying, hateful or offensive, something else) and, if they like, a few words, which are needed for "something else". The report is stored in the `reports` table with a copy of the review or the profile's name and text as it was then, since those can change, and emailed to the moderator address `App:ModeratorEmail`. In development it is `moderator@example.com` and the email goes to the API's log like the account emails. Without the setting, reports are still stored and a warning is logged. There is no moderation page yet; the moderator works from the email. The same report twice in a day counts once, and a reader can send at most 20 reports a day. A reader can report someone they have blocked. Blocks and reports go with either account when it is deleted.
+
+| Request | What it does |
+| --- | --- |
+| `POST /api/fellowship/{handle}/block` | Blocks a reader |
+| `DELETE /api/fellowship/{handle}/block` | Unblocks them |
+| `POST /api/reports` | Sends a report: `handle`, `bookId` (for a review), `reason` and `details` |
 
 ### Books added by hand
 

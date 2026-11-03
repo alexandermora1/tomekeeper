@@ -13,7 +13,7 @@ describe('the fellowship page', () => {
   let lists: FellowshipLists;
 
   beforeEach(() => {
-    lists = { friends: [tormod], askingYou: [kari], youAsked: [ase] };
+    lists = { friends: [tormod], askingYou: [kari], youAsked: [ase], blocked: [] };
     fakeApi.signedIn();
     fakeApi.on('GET', '/api/profile', { status: 200, body: settings });
     fakeApi.on('GET', '/api/fellowship', () => ({ status: 200, body: lists }));
@@ -41,7 +41,7 @@ describe('the fellowship page', () => {
   it('accepts a request, moving the reader to the fellowship', async () => {
     const user = userEvent.setup();
     fakeApi.on('POST', '/api/fellowship/kari/accept', () => {
-      lists = { friends: [{ ...kari, relation: 'friend' }, tormod], askingYou: [], youAsked: [ase] };
+      lists = { friends: [{ ...kari, relation: 'friend' }, tormod], askingYou: [], youAsked: [ase], blocked: [] };
       return { status: 200, body: { relation: 'friend' } };
     });
     renderApp('/fellowship');
@@ -98,6 +98,27 @@ describe('the fellowship page', () => {
 
     const line = await within(results).findByText('You asked Ingvild to be friends.');
     await vi.waitFor(() => expect(line).toHaveFocus());
+  });
+
+  it('lists blocked readers without links, and unblocks', async () => {
+    const user = userEvent.setup();
+    const ola: ReaderCard = { handle: 'ola', displayName: 'Ola', portrait: null, relation: 'blocked', since: '2026-11-02T09:00:00Z' };
+    lists = { ...lists, blocked: [ola] };
+    fakeApi.on('DELETE', '/api/fellowship/ola/block', () => {
+      lists = { ...lists, blocked: [] };
+      return { status: 200, body: { relation: 'none' } };
+    });
+    renderApp('/fellowship');
+
+    const blocked = await screen.findByRole('region', { name: 'Blocked readers' });
+    expect(blocked).toHaveTextContent('Ola · Blocked on 2 November 2026');
+    expect(within(blocked).queryByRole('link', { name: 'Ola' })).not.toBeInTheDocument();
+    expect(blocked).toHaveTextContent('You blocked Ola. You don’t see each other.');
+
+    await user.click(within(blocked).getByRole('button', { name: 'Unblock Ola' }));
+
+    expect(await screen.findByText('You unblocked Ola.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Blocked readers' })).not.toBeInTheDocument();
   });
 
   it('needs two letters to search', async () => {

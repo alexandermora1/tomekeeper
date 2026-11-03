@@ -28,3 +28,16 @@ public sealed class Friendship
 
     public DateTimeOffset Since { get; set; }
 }
+
+/// <summary>
+/// One reader blocking another. While it lasts, each is hidden from the other: profile, search, reviews and
+/// friends lists. Blocking ends any friendship or requests between them. The blocked reader isn't told.
+/// </summary>
+public sealed class Block
+{
+    public Guid BlockerId { get; set; }
+
+    public Guid BlockedId { get; set; }
+
+    public DateTimeOffset BlockedAt { get; set; }
+}

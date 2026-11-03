@@ -140,6 +140,8 @@ public static class ProfileEndpoints
 
         var viewerId = principal.GetUserId();
         var isOwner = owner.Id == viewerId;
+        // Blocked either way: the two don't see each other.
+        if (!isOwner && await Blocks.BetweenAsync(db, viewerId, owner.Id, cancellationToken)) return TypedResults.NotFound();
         var relation = isOwner ? null : await FellowshipEndpoints.RelationAsync(db, viewerId, owner.Id, cancellationToken);
         var viewedAs = isOwner ? @as is "friend" or "stranger" ? @as : "you" : relation == "friend" ? "friend" : "stranger";
         bool Can(Visibility visibility) =>

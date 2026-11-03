@@ -315,6 +315,32 @@ namespace Tomekeeper.Api.Data.Migrations
                     b.ToTable("books", (string)null);
                 });
 
+            modelBuilder.Entity("Tomekeeper.Api.Fellowship.Block", b =>
+                {
+                    b.Property<Guid>("BlockerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("blocker_id");
+
+                    b.Property<Guid>("BlockedId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("blocked_id");
+
+                    b.Property<DateTimeOffset>("BlockedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_at");
+
+                    b.HasKey("BlockerId", "BlockedId")
+                        .HasName("pk_blocks");
+
+                    b.HasIndex("BlockedId")
+                        .HasDatabaseName("ix_blocks_blocked_id");
+
+                    b.ToTable("blocks", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_blocks_not_self", "blocker_id <> blocked_id");
+                        });
+                });
+
             modelBuilder.Entity("Tomekeeper.Api.Fellowship.FriendRequest", b =>
                 {
                     b.Property<Guid>("FromId")
@@ -429,6 +455,58 @@ namespace Tomekeeper.Api.Data.Migrations
 
                             t.HasCheckConstraint("ck_reading_goals_pages", "pages IS NULL OR pages BETWEEN 1 AND 100000");
                         });
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Moderation.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("BookId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("book_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("details");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid>("ReportedId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reported_id");
+
+                    b.Property<Guid>("ReporterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reporter_id");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasMaxLength(6000)
+                        .HasColumnType("character varying(6000)")
+                        .HasColumnName("snapshot");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reports");
+
+                    b.HasIndex("ReportedId")
+                        .HasDatabaseName("ix_reports_reported_id");
+
+                    b.HasIndex("ReporterId", "CreatedAt")
+                        .HasDatabaseName("ix_reports_reporter_id_created_at");
+
+                    b.ToTable("reports", (string)null);
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Progress.ProgressEntry", b =>
@@ -661,6 +739,23 @@ namespace Tomekeeper.Api.Data.Migrations
                         .HasConstraintName("fk_books_users_added_by_id");
                 });
 
+            modelBuilder.Entity("Tomekeeper.Api.Fellowship.Block", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("BlockedId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blocks_users_blocked_id");
+
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("BlockerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_blocks_users_blocker_id");
+                });
+
             modelBuilder.Entity("Tomekeeper.Api.Fellowship.FriendRequest", b =>
                 {
                     b.HasOne("Tomekeeper.Api.Accounts.User", null)
@@ -713,6 +808,23 @@ namespace Tomekeeper.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_reading_goals_users_user_id");
+                });
+
+            modelBuilder.Entity("Tomekeeper.Api.Moderation.Report", b =>
+                {
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReportedId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reports_users_reported_id");
+
+                    b.HasOne("Tomekeeper.Api.Accounts.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reports_users_reporter_id");
                 });
 
             modelBuilder.Entity("Tomekeeper.Api.Progress.ProgressEntry", b =>

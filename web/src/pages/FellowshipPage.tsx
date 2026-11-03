@@ -88,6 +88,13 @@ export function FellowshipPage() {
         </Frame>
       )}
 
+      {lists && lists.blocked.length > 0 && (
+        <Frame title="Blocked readers" className={chronicleStyles.frame}>
+          <p className={chronicleStyles.note}>They don’t see you, and you don’t see them. They aren’t told.</p>
+          <ReaderList readers={lists.blocked} idPrefix="blocked" sinceText={(date) => `Blocked on ${date}`} onChanged={changed} />
+        </Frame>
+      )}
+
       {lists && lists.youAsked.length > 0 && (
         <Frame title="You asked" className={chronicleStyles.frame}>
           <p className={chronicleStyles.note}>They haven’t answered yet.</p>
@@ -173,7 +180,8 @@ function ReaderList({ readers, idPrefix, sinceText, onChanged }: ReaderListProps
           <Portrait id={reader.portrait} size="tiny" />
           <div className={styles.about}>
             <p className={styles.name}>
-              <Link to={`/readers/${reader.handle}`}>{reader.displayName}</Link>
+              {/* A blocked reader's profile is hidden from you too, so there is nothing to link to. */}
+              {reader.relation === 'blocked' ? <strong>{reader.displayName}</strong> : <Link to={`/readers/${reader.handle}`}>{reader.displayName}</Link>}
               {sinceText && reader.since && <span className={styles.since}> · {sinceText(dateFormat.format(new Date(reader.since)))}</span>}
             </p>
             <RelationActions

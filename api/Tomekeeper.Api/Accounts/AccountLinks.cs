@@ -12,6 +12,9 @@ public sealed class AppOptions
     /// <summary>Where readers open the site, such as http://localhost:5173. Links in emails point here.</summary>
     [Required, Url]
     public string PublicUrl { get; set; } = "";
+
+    /// <summary>Where reports from readers are emailed. Without it, reports are stored and a warning is logged.</summary>
+    public string? ModeratorEmail { get; set; }
 }
 
 /// <summary>
