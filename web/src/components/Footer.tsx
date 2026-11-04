@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import styles from './Footer.module.css';
 
 export function Footer() {
@@ -6,16 +7,16 @@ export function Footer() {
       <div className={styles.inner}>
         <ul className={styles.links}>
           <li>
-            <a href="/privacy">Privacy</a>
+            <Link to="/privacy">Privacy</Link>
           </li>
           <li>
-            <a href="/accessibility">Accessibility statement</a>
+            <Link to="/accessibility">Accessibility statement</Link>
           </li>
           <li>
-            <a href="/settings">Settings</a>
+            <Link to="/settings">Settings</Link>
           </li>
           <li>
-            <a href="/credits">Image credits</a>
+            <Link to="/credits">Image credits</Link>
           </li>
         </ul>
         <p className={styles.credits}>

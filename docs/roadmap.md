@@ -59,10 +59,11 @@ Decided by Alex on 3 November 2026: one App Service for the site and the API, in
 | Step | What | Status |
 | --- | --- | --- |
 | 6.1 | Ready for App Service: the API serves the built front-end with a fallback to `index.html`, forwarded headers behind the proxy, HSTS, migrations on start, kept sign-in keys, email through Azure Communication Services | Done |
-| 6.2 | Infrastructure as code (Bicep): App Service (F1), PostgreSQL Flexible Server (B1ms), Communication Services with an Azure-managed email domain, a budget alert | Next |
-| 6.3 | Deploy workflow (GitHub Actions, signing in to Azure with OIDC), a step-by-step guide, and the month on Azure | |
-| 6.4 | Privacy policy and accessibility statement | |
-| 6.5 | WCAG audit | |
+| 6.2 | Infrastructure as code (Bicep, `infra/`): App Service (F1, Linux, .NET 10), PostgreSQL Flexible Server (B1ms, PostgreSQL 18), Communication Services with an Azure-managed email domain, a budget alert; the first half of `docs/azure.md` | Done |
+| 6.3 | Deploy workflow (GitHub Actions, run by hand, signing in to Azure with OIDC and a role limited to the web app), a Bicep check workflow, the rest of `docs/azure.md` | Done |
+| 6.3b | The month on Azure: Alex creates the account and deploys; what to try is in `docs/azure.md` | When Alex is ready |
+| 6.4 | Privacy policy (`/privacy`) and accessibility statement (`/accessibility`), with who runs the site from deployment settings (`GET /api/site`); an image credits page (`/credits`) for the footer link | Done |
+| 6.5 | WCAG audit: a review against WCAG 2.2 AA, and a VoiceOver walk-through by Alex with a checklist; the statement updated with the findings | Next |
 | 6.6 | README with screenshots and a recording, then the deployment comes down | |
 
 ## Earlier plan for stage 6

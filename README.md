@@ -2,7 +2,7 @@
 
 A reading tracker where the yearly goal counts **pages**, not just books. You log progress as you read, earn XP for every page, take on quests through the year and keep a chronicle of what you have read. The look is a late-medieval printed book: woodcuts from the Nuremberg Chronicle (1493), Hans Holbein's initials and a wheel of the twelve labours of the months.
 
-> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is done: profiles, friends, reviews with stars, blocking and reporting. Stage 6, a month on Azure and the showcase, is under way: the app is ready to run on Azure App Service. See the [roadmap](docs/roadmap.md).
+> **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is done: profiles, friends, reviews with stars, blocking and reporting. Stage 6, a month on Azure and the showcase, is under way: the app is ready to run on Azure App Service, with the infrastructure in Bicep, a deploy workflow, a privacy policy and an accessibility statement. See the [roadmap](docs/roadmap.md).
 
 ## What it will do
 
@@ -277,6 +277,9 @@ Settings for Azure (App Service app settings; the infrastructure in stage 6.2 se
 - `DataProtection:KeysPath`: a folder that survives restarts (on App Service, under `/home`), for the keys that protect sign-in cookies.
 - `Email:AzureConnectionString` and `Email:Sender`: emails go through Azure Communication Services. Outside development, without them, emails aren't sent and a warning is logged. A failed send is logged without addresses or links, and the request goes on.
 - `ConnectionStrings:Tomekeeper`, `App:PublicUrl` and `App:ModeratorEmail`, as described above.
+- `App:OperatorName` and `App:ContactEmail`: who runs the site and where readers write, shown in the privacy policy and accessibility statement (from `GET /api/site`, open to everyone). They are deployment settings, so they aren't in the repository; without them the pages say they are shown when the site is online.
+
+The Azure resources are described as Bicep in [infra/](infra/main.bicep): an F1 App Service plan and web app with these settings, PostgreSQL Flexible Server (B1ms, PostgreSQL 18; TLS with the certificate checked), Communication Services with an Azure-managed email domain, and a budget alert. The workflow *Deploy to Azure* (run by hand) builds the front-end into the API, publishes it and deploys it, signing in to Azure with GitHub's OIDC token, so no Azure password is stored in GitHub. [docs/azure.md](docs/azure.md) has the steps, from creating the account to taking it all down. The *Infra* workflow checks that the Bicep builds and passes its linter.
 
 To try the published shape locally: build the front-end, copy `web/dist` to `api/Tomekeeper.Api/wwwroot`, and run the API with `ASPNETCORE_ENVIRONMENT=Production`, a connection string and `App:PublicUrl=http://localhost:5080`. The whole site is then on http://localhost:5080.
 
@@ -331,7 +334,9 @@ tomekeeper/
 
 ## Accessibility
 
-The site aims for WCAG 2.2 AA. Every colour pair is checked for contrast (see [docs/design-tokens.md](docs/design-tokens.md)), the decorative typeface can be turned off, the theme follows the device setting unless the reader picks one, and the tests find elements by role and name, the same way assistive technology does.
+The site aims for WCAG 2.2 AA. The [accessibility statement](web/src/pages/AccessibilityPage.tsx) (`/accessibility`) says what readers can do, how it is checked and the known problems; the [privacy policy](web/src/pages/PrivacyPage.tsx) (`/privacy`) says what is kept and why, who else handles it, and readers' rights. Both, and the image credits (`/credits`), are open without signing in and linked from every page's footer.
+
+Every colour pair is checked for contrast (see [docs/design-tokens.md](docs/design-tokens.md)), the decorative typeface can be turned off, the theme follows the device setting unless the reader picks one, and the tests find elements by role and name, the same way assistive technology does.
 
 ## How it is built
 

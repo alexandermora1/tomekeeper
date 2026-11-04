@@ -6,9 +6,12 @@ import { ConfirmEmailPage } from './pages/ConfirmEmailPage';
 import { FirstStepsPage } from './pages/FirstStepsPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LibraryPage } from './pages/LibraryPage';
+import { AccessibilityPage } from './pages/AccessibilityPage';
+import { CreditsPage } from './pages/CreditsPage';
 import { EditProfilePage } from './pages/EditProfilePage';
 import { FellowshipPage } from './pages/FellowshipPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { PrivacyPage } from './pages/PrivacyPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ReportPage } from './pages/ReportPage';
 import { QuestsPage } from './pages/QuestsPage';
@@ -73,6 +76,9 @@ export function App() {
               </RequireReader>
             }
           />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/accessibility" element={<AccessibilityPage />} />
+          <Route path="/credits" element={<CreditsPage />} />
           <Route
             path="/report/:handle"
             element={

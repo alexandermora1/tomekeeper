@@ -15,6 +15,12 @@ public sealed class AppOptions
 
     /// <summary>Where reports from readers are emailed. Without it, reports are stored and a warning is logged.</summary>
     public string? ModeratorEmail { get; set; }
+
+    /// <summary>Who runs the site, shown in the privacy policy.</summary>
+    public string? OperatorName { get; set; }
+
+    /// <summary>Where readers write about their data or accessibility, shown in the privacy policy and accessibility statement.</summary>
+    public string? ContactEmail { get; set; }
 }
 
 /// <summary>

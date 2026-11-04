@@ -15,6 +15,7 @@ using Tomekeeper.Api.Reviews;
 using Tomekeeper.Api.Progress;
 using Tomekeeper.Api.Security;
 using Tomekeeper.Api.Shelves;
+using Tomekeeper.Api.Site;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -190,6 +191,7 @@ app.MapProfileEndpoints();
 app.MapFellowshipEndpoints();
 app.MapReviewEndpoints();
 app.MapReportEndpoints();
+app.MapSiteEndpoints();
 app.MapFrontEndFallback();
 
 app.Run();

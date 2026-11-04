@@ -1,0 +1,64 @@
+.page {
+  max-width: 72ch;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.375rem, 5.5vw, 4rem); /* 38–64px */
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.updated {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.page h2 {
+  margin: 40px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.625rem, 3.5vw, 2.125rem); /* 26–34px */
+  line-height: 1.15;
+}
+
+.page h3 {
+  margin: 24px 0 0;
+  font-family: var(--font-caps);
+  font-size: 1.25rem; /* 20px */
+}
+
+.page p,
+.page li {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.6;
+}
+
+.page p {
+  margin: 12px 0 0;
+}
+
+.page ul {
+  margin: 12px 0 0;
+  padding-left: 1.4em;
+}
+
+.page li + li {
+  margin-top: 6px;
+}
+
+.page a {
+  overflow-wrap: anywhere;
+}
+
+.short {
+  margin-top: 24px;
+  padding: 16px 20px;
+  border: 2px solid var(--ink);
+  background: var(--raised);
+}
+
+.short h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
