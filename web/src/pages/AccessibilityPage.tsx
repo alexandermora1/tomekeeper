@@ -4,6 +4,7 @@ import { usePageTitle } from '../routing/usePageTitle';
 import styles from './StatementPage.module.css';
 
 const UPDATED = '4 November 2026';
+const AUDITED = '4 November 2026';
 
 /** The accessibility statement. Address: /accessibility, open to everyone. */
 export function AccessibilityPage() {
@@ -47,8 +48,14 @@ export function AccessibilityPage() {
           action.
         </p>
         <p>
-          Automatic checks find only some problems. A full manual review against WCAG 2.2, including a walk through the site
-          with the VoiceOver screen reader, comes next. This statement will be updated with what it finds.
+          On {AUDITED}, every page was reviewed against all the WCAG 2.2 A and AA success criteria, signed in and out and
+          in both themes: target sizes, focus on every keyboard stop, text spacing, reflow, titles and headings, as well as
+          what axe checks. Every criterion that applies is met; one small problem (links one pixel short of the minimum
+          target size) was fixed. The full audit is published with the code.
+        </p>
+        <p>
+          Automatic checks and code review can't tell how the site sounds. A walk-through with the VoiceOver screen reader
+          comes next, and this statement will be updated with what it finds.
         </p>
 
         <h2>Known problems</h2>

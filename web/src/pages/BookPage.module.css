@@ -3,6 +3,12 @@
   font-size: 1.0625rem; /* 17px */
 }
 
+.back a {
+  /* At least 24px tall, for WCAG 2.2's target size (2.5.8). */
+  display: inline-block;
+  padding-block: 2px;
+}
+
 .back a::before {
   content: '← ';
 }

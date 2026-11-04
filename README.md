@@ -334,7 +334,7 @@ tomekeeper/
 
 ## Accessibility
 
-The site aims for WCAG 2.2 AA. The [accessibility statement](web/src/pages/AccessibilityPage.tsx) (`/accessibility`) says what readers can do, how it is checked and the known problems; the [privacy policy](web/src/pages/PrivacyPage.tsx) (`/privacy`) says what is kept and why, who else handles it, and readers' rights. Both, and the image credits (`/credits`), are open without signing in and linked from every page's footer.
+The site aims for WCAG 2.2 AA. The [accessibility statement](web/src/pages/AccessibilityPage.tsx) (`/accessibility`) says what readers can do, how it is checked and the known problems, and the site was audited against WCAG 2.2 AA in [docs/wcag-audit.md](docs/wcag-audit.md). The [privacy policy](web/src/pages/PrivacyPage.tsx) (`/privacy`) says what is kept and why, who else handles it, and readers' rights. Both, and the image credits (`/credits`), are open without signing in and linked from every page's footer.
 
 Every colour pair is checked for contrast (see [docs/design-tokens.md](docs/design-tokens.md)), the decorative typeface can be turned off, the theme follows the device setting unless the reader picks one, and the tests find elements by role and name, the same way assistive technology does.
 
