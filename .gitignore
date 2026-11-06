@@ -27,3 +27,6 @@ appsettings.Development.local.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# The demo's seeding output (see demo/README.md)
+demo/out/

@@ -67,6 +67,16 @@ Decided by Alex on 3 November 2026: one App Service for the site and the API, in
 | 6.5b | VoiceOver walk-through by Alex (`docs/voiceover-checklist.md`), then the statement and audit updated | When Alex is ready |
 | 6.6 | README with screenshots and a recording, then the deployment comes down | |
 
+### The demo
+
+Decided by Alex on 6 November 2026: a demo anyone can look around in, signed in as an example reader with the data from the design sketches, running in the browser on recorded data so it can stay online for free.
+
+| Step | What | Status |
+| --- | --- | --- |
+| D1 | Example data (`demo/`): the sketches' catalogue, a stand-in Open Library for it, and a script that makes seven readers through the API and moves their dates back | Done |
+| D2 | Recording what the API answers on every page; a demo build of the front-end that answers from it, with a banner, a fixed date and a "nothing is saved" message for changes | Next |
+| D3 | Hosting on GitHub Pages, with a workflow, and a link from the README |  |
+
 ## Earlier plan for stage 6
 
 6. **Azure test month and showcase:** infrastructure as code (Bicep), a deploy workflow (with forwarded headers, so Google's redirect address uses https behind Azure), one month on Azure to prove it works end to end, privacy policy (including what reports keep, and who reads them) and accessibility statement, WCAG audit, README with screenshots, then the deployment comes down again.
