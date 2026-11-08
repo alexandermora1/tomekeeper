@@ -1,0 +1,13 @@
+.banner {
+  padding: 10px 16px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.banner p {
+  max-width: 72rem;
+  margin: 0 auto;
+  font-size: 1rem;
+  line-height: 1.5;
+}

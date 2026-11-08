@@ -7,6 +7,7 @@ import { formErrorsFrom, noErrors, problemMessage, type FormErrors } from '../co
 import { TextField } from '../components/forms/TextField';
 import formStyles from '../components/forms/forms.module.css';
 import { Layout } from '../components/Layout';
+import { siteAddress } from '../routing/siteAddress';
 import { usePageTitle } from '../routing/usePageTitle';
 import bookStyles from './BookPage.module.css';
 
@@ -70,7 +71,7 @@ export function EditProfilePage() {
             id="handle"
             name="handle"
             label="Your address"
-            hint={`Your profile is at ${window.location.host}/readers/ followed by this. Lowercase letters, digits and hyphens.`}
+            hint={`Your profile is at ${siteAddress('/readers/')} followed by this. Lowercase letters, digits and hyphens.`}
             defaultValue={settings.handle}
             autoComplete="off"
             autoCapitalize="none"

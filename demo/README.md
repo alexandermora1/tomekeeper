@@ -5,8 +5,8 @@ A version of Tomekeeper that anyone can look around in without an account: the r
 Building it has three parts:
 
 1. **The example data** (this folder): readers made through the real API, in a database of their own.
-2. **The recording and the demo build** (next step): what the API answers on every page, saved with the front-end.
-3. **Hosting** (after that): GitHub Pages.
+2. **The recording and the demo build**: what the API answers on every page, saved with the front-end in `web/src/demo/recording.json`, and a build that answers from it.
+3. **Hosting** (next step): GitHub Pages.
 
 ## The example readers
 
@@ -36,3 +36,30 @@ DEMO_PSQL="docker compose exec -T db psql -U tomekeeper -d tomekeeper_demo" node
 ```
 
 It takes about 20 seconds. To start again, drop the database (`docker compose exec db dropdb -U tomekeeper tomekeeper_demo`) and restart the API. Every demo reader's password is `lantern harbour winter quill`, and their emails end in `@demo.tomekeeper.invalid`, so you can sign in as Alex to look around before recording.
+
+## Recording
+
+With the same API still running on the demo database, and the stand-in Open Library (for search):
+
+```sh
+node demo/record.mjs
+```
+
+[record.mjs](record.mjs) signs in as Alex and saves what the API answers to every request the pages make (the chronicle, quests, character, legacy, shelves, every book page, every profile, the fellowship, the settings) in `web/src/demo/recording.json`, about 140 KB. It also saves the whole catalogue as search results and the other readers as reader cards, so the demo can answer searches. The demo's today is the day of the recording.
+
+## The demo build
+
+```sh
+cd web
+npm run build:demo      # into web/dist-demo, for serving under /tomekeeper/
+npx vite preview --outDir dist-demo --base /tomekeeper/   # to try it: http://localhost:4173/tomekeeper/
+```
+
+It is the ordinary front-end built in the mode `demo`, which sets `VITE_DEMO` to `true` ([vite.config.ts](../web/vite.config.ts)), and the code in [web/src/demo](../web/src/demo):
+
+- `apiRequest` answers from the recording instead of the network ([demoApi.ts](../web/src/demo/demoApi.ts)). Book and reader searches look through the recorded catalogue and readers, without accents ("godel" finds Gödel). Anything that would change data is refused with "This is a demo, so nothing is saved", which the pages show where they show errors.
+- The clock stands still at noon on the recorded day ([clock.ts](../web/src/demo/clock.ts)), so this month, this year and "pages a day from today" match the data however long the demo stays online.
+- A banner above every page says it is a demo with example data, on which day, and that nothing is saved. There is no Sign out, the Open Library links are searches (the demo's keys are made up), and the privacy page says what the demo itself keeps: nothing.
+- The router and the addresses on the page work under a folder (`--base /tomekeeper/`).
+
+Other builds leave all of this out: the checks of `VITE_DEMO` are settled when building, so the demo code and the recording aren't in the real site's bundle.

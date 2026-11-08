@@ -18,9 +18,20 @@ import { App } from './App';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element in index.html');
+const container = root;
 
-createRoot(root).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function start() {
+  // The demo build stops the clock at the day its data was recorded (src/demo).
+  if (import.meta.env.VITE_DEMO === 'true') {
+    (await import('./demo/demoApi')).startDemo();
+    // Loaded before the first page, so the banner is there from the start.
+    await import('./demo/DemoBanner');
+  }
+  createRoot(container).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void start();

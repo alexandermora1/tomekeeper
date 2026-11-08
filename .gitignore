@@ -1,6 +1,7 @@
 # Node and Vite
 node_modules/
 dist/
+dist-demo/
 *.local
 .vite/
 coverage/

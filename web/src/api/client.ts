@@ -52,6 +52,8 @@ type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
  * Throws ApiError for error answers and NetworkError when the API can't be reached.
  */
 export async function apiRequest<T = undefined>(method: Method, path: string, body?: unknown): Promise<T> {
+  // The demo build answers from recorded data (src/demo). Other builds leave this out entirely.
+  if (import.meta.env.VITE_DEMO === 'true') return (await (await import('../demo/demoApi')).demoAnswer(method, path)) as T;
   const headers: Record<string, string> = { Accept: 'application/json', [REQUEST_HEADER]: '1' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
 

@@ -61,7 +61,8 @@ export function Header({ current, theme, script, onToggleTheme, onToggleScript }
         <div className={styles.toggles}>
           <ToggleButton label="Dark theme" pressed={theme === 'dark'} onClick={onToggleTheme} />
           <ToggleButton label="Plain script" pressed={script === 'plain'} onClick={onToggleScript} />
-          {status === 'signed-in' && (
+          {/* The demo has nobody to sign out. */}
+          {status === 'signed-in' && import.meta.env.VITE_DEMO !== 'true' && (
             <button type="button" className={styles.action} onClick={() => void signOut()}>
               Sign out
             </button>

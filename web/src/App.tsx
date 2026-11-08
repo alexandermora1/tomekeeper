@@ -32,7 +32,7 @@ import { SessionProvider } from './session/SessionProvider';
  */
 export function App() {
   return (
-    <BrowserRouter useTransitions={false}>
+    <BrowserRouter useTransitions={false} basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
       <SessionProvider>
         <FocusOnNavigate />
         <Routes>

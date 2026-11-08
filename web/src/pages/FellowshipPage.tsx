@@ -10,6 +10,7 @@ import { Frame } from '../components/Frame';
 import { Layout } from '../components/Layout';
 import { Portrait } from '../components/Portrait';
 import { RelationActions } from '../fellowship/RelationActions';
+import { siteAddress } from '../routing/siteAddress';
 import { usePageTitle } from '../routing/usePageTitle';
 import chronicleStyles from './ChroniclePage.module.css';
 import styles from './FellowshipPage.module.css';
@@ -61,7 +62,7 @@ export function FellowshipPage() {
         {handle && (
           <>
             {' '}
-            Your profile is at <Link to="/profile">{`${window.location.host}/readers/${handle}`}</Link>.
+            Your profile is at <Link to="/profile">{siteAddress(`/readers/${handle}`)}</Link>.
           </>
         )}
       </p>

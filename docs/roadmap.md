@@ -74,8 +74,8 @@ Decided by Alex on 6 November 2026: a demo anyone can look around in, signed in 
 | Step | What | Status |
 | --- | --- | --- |
 | D1 | Example data (`demo/`): the sketches' catalogue, a stand-in Open Library for it, and a script that makes seven readers through the API and moves their dates back | Done |
-| D2 | Recording what the API answers on every page; a demo build of the front-end that answers from it, with a banner, a fixed date and a "nothing is saved" message for changes | Next |
-| D3 | Hosting on GitHub Pages, with a workflow, and a link from the README |  |
+| D2 | Recording what the API answers on every page (`demo/record.mjs`); a demo build (`npm run build:demo`) that answers from it, with search over the recorded catalogue, a banner, a clock stopped at the recorded day and "nothing is saved" for changes | Done |
+| D3 | Hosting on GitHub Pages, with a workflow, and a link from the README | Next |
 
 ## Earlier plan for stage 6
 

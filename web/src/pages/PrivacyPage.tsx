@@ -17,6 +17,14 @@ export function PrivacyPage() {
       <article className={styles.page}>
         <h1 className={styles.title}>Privacy</h1>
         <p className={styles.updated}>Last changed {UPDATED}.</p>
+        {import.meta.env.VITE_DEMO === 'true' && (
+          <p>
+            <strong>In this demo</strong>, nothing is kept: it runs in your browser on recorded example data, and nothing
+            you do is sent anywhere. Only your choices of theme and Plain script are kept, in your own browser. The demo
+            is hosted on GitHub Pages, and GitHub may log visits as its own privacy statement says. The policy below is for
+            the real Tomekeeper.
+          </p>
+        )}
 
         <section className={styles.short} aria-labelledby="privacy-short">
           <h2 id="privacy-short">In short</h2>

@@ -155,7 +155,7 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
             <dt>Source</dt>
             <dd>
               {book.openLibraryKey ? (
-                <a href={`https://openlibrary.org/works/${book.openLibraryKey}`}>{book.title} on Open Library</a>
+                <a href={openLibraryUrl(book)}>{book.title} on Open Library</a>
               ) : (
                 'Added by you, by hand. Only you can see it.'
               )}
@@ -219,6 +219,14 @@ function BookDetails({ book, entry, onEntry, onDeleted }: BookDetailsProps) {
       <BookReviews book={book} shelved={entry !== null} onReviewed={(reviewed) => entry && onEntry({ ...entry, reviewed })} />
     </>
   );
+}
+
+/** The work on Open Library. The demo's books have made-up keys, so there it is a search for the book instead. */
+function openLibraryUrl(book: Book): string {
+  if (import.meta.env.VITE_DEMO === 'true') {
+    return `https://openlibrary.org/search?q=${encodeURIComponent(`${book.title} ${book.authors.join(' ')}`)}`;
+  }
+  return `https://openlibrary.org/works/${book.openLibraryKey}`;
 }
 
 function pagesText(book: Book, entry: ShelfEntry | null): string {

@@ -38,8 +38,10 @@ function contentSecurityPolicy(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), contentSecurityPolicy()],
+  // The demo build (npm run build:demo, mode "demo") answers from recorded data instead of the API (src/demo).
+  define: mode === 'demo' ? { 'import.meta.env.VITE_DEMO': JSON.stringify('true') } : {},
   server: {
     port: 5173,
     // In development the front-end and the API look like one site: /api goes to `dotnet run` on port 5080.
@@ -59,4 +61,4 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
   },
-});
+}));

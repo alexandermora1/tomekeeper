@@ -13,6 +13,7 @@ import { Stars } from '../components/Stars';
 import { BlockAndReport } from '../fellowship/BlockAndReport';
 import { RelationActions } from '../fellowship/RelationActions';
 import { toRoman } from '../game/roman';
+import { siteAddress } from '../routing/siteAddress';
 import { usePageTitle } from '../routing/usePageTitle';
 import chronicleStyles from './ChroniclePage.module.css';
 import styles from './ProfilePage.module.css';
@@ -164,7 +165,7 @@ function ProfileView({ data, onSettings, onRelation, onBlocked }: ProfileViewPro
         {data.portrait && <Portrait id={data.portrait} size="large" />}
         <div className={styles.who}>
           <p className={styles.address}>
-            {window.location.host}/readers/{data.handle}
+            {siteAddress(`/readers/${data.handle}`)}
           </p>
           <h1 id="profile-name" tabIndex={-1} className={chronicleStyles.title}>
             {data.displayName}
