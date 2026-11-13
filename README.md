@@ -4,6 +4,26 @@ A reading tracker where the yearly goal counts **pages**, not just books. You lo
 
 > **Status:** early development. Stage 1, the foundation, is done: the design with light and dark themes and Plain script, the API and database, accounts (email and password, or Google) with email confirmation and password reset, the first steps after signing up (a goal for the year and a portrait), and hardening (rate limits, security headers, a Content Security Policy, deleting an account). Stage 2, the library, is done: readers search Open Library or add books by hand, keep them on four shelves and open a page for each book. Stage 3, progress and goals, is done: readers log their progress on each book's page or on the chronicle, which reckons the year against their goal and shows the Twelve Labours. Stage 4, the game, is done: XP, levels, titles, quests, gear, attributes and volumes. Stage 5, the fellowship, is done: profiles, friends, reviews with stars, blocking and reporting. Stage 6, a month on Azure and the showcase, is under way: the app is ready to run on Azure App Service, with the infrastructure in Bicep, a deploy workflow, a privacy policy and an accessibility statement. See the [roadmap](docs/roadmap.md).
 
+## The design
+
+The look is settled in design sketches, which the site follows: a late-medieval printed book in paper-and-ink colours, with a dark theme, and a "Plain script" switch that swaps the blackletter for an ordinary typeface. These are the sketches, not screenshots of the running site.
+
+<p align="center">
+  <img src="docs/design/chronicle-light.webp" alt="Design sketch of the chronicle in the light theme: a woodcut view of Nuremberg over the heading 'The Chronicle of Alex', with three framed panels: the reader, now reading, and the year's reckoning." width="49%">
+  <img src="docs/design/chronicle-dark.webp" alt="The same chronicle page in the dark theme, with cream text on a near-black ground." width="49%">
+</p>
+
+<p align="center">
+  <img src="docs/design/library.webp" alt="Design sketch of the library: a book search for 'Erikson' with five results, and the reader's shelves below." width="49%">
+  <img src="docs/design/quests.webp" alt="Design sketch of the quests page: a portrait with gear slots, level, titles and attributes, and the yearly quests below." width="49%">
+</p>
+
+<p align="center">
+  <img src="docs/design/phone.webp" alt="Design sketch of the chronicle on a phone: the navigation stacked above the woodcut, the heading and the reader's panel." width="260">
+</p>
+
+The images are in [docs/design](docs/design), and the colours and type are in [docs/design-tokens.md](docs/design-tokens.md). The woodcuts are credited in [docs/image-credits.md](docs/image-credits.md).
+
 ## What it will do
 
 - Set a yearly goal in pages, books or both, and log progress as you read: page number, or percent for ebooks and audiobooks.
